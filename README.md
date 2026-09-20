@@ -1,2 +1,2 @@
 # NetSuite-Next-Toolkit
-Chrome extension focused on adding/restoring capability to NetSuite Next.
+Chrome extension focused on adding/restoring capabilities to NetSuite Next.
