@@ -77,42 +77,35 @@ function buildTopLevelGroups(nav: NavExtraction): MenuContainerNode[] {
   ];
 }
 
-// Recursively wires up show/hide + Floating UI positioning, level by
-// level, parent before children. Returns this level's full subtree (its
-// own flyout plus every flyout nested inside it, any depth) so the caller
-// (its parent, or activateFlyouts for the root) can use that list.
+// EXPERIMENT: same as the body-detaching version, minus the detaching —
+// submenus stay nested inside their trigger <li> (as buildMenuList made
+// them), relying only on `position: fixed` to place them against the
+// viewport. This is testing whether the portal-to-body complexity from
+// the previous commit was actually needed, or just a defensive guess
+// about NetSuite's ancestor CSS that never gets exercised in practice.
+// If any flyout turns up clipped/mispositioned, that confirms it was
+// needed and this experiment should be reverted (git revert of the
+// previous commit's follow-up).
 //
-// Two separate rules govern closing, deliberately not the same mechanism:
+// Two separate rules still govern closing:
 //  - Switching siblings (e.g. Shortcuts -> Menu) closes the old sibling's
-//    whole subtree immediately, no delay — handled right here, since a
-//    level knows its own direct children's subtrees.
+//    whole subtree immediately, no delay.
 //  - Leaving the tree entirely closes everything after a grace period —
-//    handled by cancelGlobalHide/scheduleGlobalHide, one shared timer
-//    threaded through every level (not a per-level timer), so hovering
-//    *anywhere* in the tree keeps the whole thing alive, and the grace
-//    period only actually elapses once nothing anywhere is being hovered.
+//    one shared timer threaded through every level (not a per-level
+//    timer), so hovering *anywhere* in the tree keeps the whole thing
+//    alive, and the grace period only elapses once nothing anywhere is
+//    being hovered.
+//
+// Since nothing is detached anymore, "this level's descendants" and
+// "this level's siblings" can go back to plain live DOM queries instead
+// of manually threading subtree arrays through the recursion.
 function wireLevel(
   trigger: HTMLElement,
   flyout: HTMLUListElement,
   placement: "top-start" | "right-start",
   cancelGlobalHide: () => void,
   scheduleGlobalHide: () => void,
-): HTMLElement[] {
-  const childEntries: { trigger: HTMLElement; submenu: HTMLUListElement }[] = [];
-  for (const li of Array.from(flyout.children)) {
-    const submenu = li.querySelector<HTMLUListElement>(":scope > .nst-vh-submenu");
-    if (submenu) {
-      childEntries.push({ trigger: li as HTMLElement, submenu });
-    }
-  }
-
-  // Detach each direct child submenu to body now — its own further-nested
-  // submenus are still inside it at this point, so they move along with
-  // it; the recursive wireLevel call below handles detaching those in turn.
-  for (const { submenu } of childEntries) {
-    document.body.appendChild(submenu);
-  }
-
+): void {
   async function updatePosition(): Promise<void> {
     const { x, y } = await computePosition(trigger, flyout, {
       strategy: "fixed",
@@ -137,33 +130,32 @@ function wireLevel(
   flyout.addEventListener("mouseenter", cancelGlobalHide);
   flyout.addEventListener("mouseleave", scheduleGlobalHide);
 
-  // Recurse first so each child's full subtree is known before wiring the
-  // sibling-switching listeners below.
-  const childSubtrees = childEntries.map(({ trigger: childTrigger, submenu: childSubmenu }) => ({
-    submenu: childSubmenu,
-    subtree: wireLevel(childTrigger, childSubmenu, "right-start", cancelGlobalHide, scheduleGlobalHide),
-  }));
+  const childEntries: { trigger: HTMLElement; submenu: HTMLUListElement }[] = [];
+  for (const li of Array.from(flyout.children)) {
+    const submenu = li.querySelector<HTMLUListElement>(":scope > .nst-vh-submenu");
+    if (submenu) {
+      childEntries.push({ trigger: li as HTMLElement, submenu });
+    }
+  }
 
   for (const { trigger: childTrigger, submenu: childSubmenu } of childEntries) {
     childTrigger.addEventListener("mouseenter", () => {
-      for (const sibling of childSubtrees) {
-        if (sibling.submenu !== childSubmenu) {
-          for (const el of sibling.subtree) {
-            el.style.display = "none";
-          }
+      for (const sibling of childEntries) {
+        if (sibling.submenu === childSubmenu) continue;
+        sibling.submenu.style.display = "none";
+        for (const nested of sibling.submenu.querySelectorAll<HTMLElement>(".nst-vh-submenu")) {
+          nested.style.display = "none";
         }
       }
     });
+    wireLevel(childTrigger, childSubmenu, "right-start", cancelGlobalHide, scheduleGlobalHide);
   }
-
-  return [flyout, ...childSubtrees.flatMap((c) => c.subtree)];
 }
 
 function activateFlyouts(wrapper: HTMLElement, topLevel: HTMLUListElement): void {
-  document.body.appendChild(topLevel);
+  wrapper.appendChild(topLevel);
 
   let globalHideTimer: ReturnType<typeof setTimeout> | undefined;
-  let allFlyouts: HTMLElement[] = [];
 
   function cancelGlobalHide(): void {
     clearTimeout(globalHideTimer);
@@ -172,13 +164,14 @@ function activateFlyouts(wrapper: HTMLElement, topLevel: HTMLUListElement): void
   function scheduleGlobalHide(): void {
     clearTimeout(globalHideTimer);
     globalHideTimer = setTimeout(() => {
-      for (const el of allFlyouts) {
+      topLevel.style.display = "none";
+      for (const el of topLevel.querySelectorAll<HTMLElement>(".nst-vh-submenu")) {
         el.style.display = "none";
       }
     }, HIDE_DELAY_MS);
   }
 
-  allFlyouts = wireLevel(wrapper, topLevel, "top-start", cancelGlobalHide, scheduleGlobalHide);
+  wireLevel(wrapper, topLevel, "top-start", cancelGlobalHide, scheduleGlobalHide);
 }
 
 // Wraps the existing nav button in a positioned container purely so we
