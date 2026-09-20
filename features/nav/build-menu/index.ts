@@ -1,9 +1,9 @@
 // The orchestrator
 
+import { NAV_MENU_BUTTON_SELECTOR } from "@/core/selectors";
 import { waitForElement } from "@/core/utils";
 import { extractNav, type MenuNode, type NavExtraction } from "./extractor";
 
-const MENU_BUTTON_SELECTOR = 'button[aria-label="Menu"][telemetryid="menu-bar-button-menu"]';
 const CLOSE_BUTTON_SELECTOR = "a#ask-oracle-main_ao-close";
 const NAV_PANEL_SELECTOR = 'div[slot="askOracleCustom"]';
 const COLLAPSIBLE_SELECTOR = 'div[role="button"][aria-controls^="oj-collapsible-content"]';
@@ -17,9 +17,9 @@ function sleep(ms: number): Promise<void> {
 }
 
 function getMenuButton(): HTMLButtonElement {
-  const button = document.querySelector<HTMLButtonElement>(MENU_BUTTON_SELECTOR);
+  const button = document.querySelector<HTMLButtonElement>(NAV_MENU_BUTTON_SELECTOR);
   if (!button) {
-    throw new Error(`Could not find nav menu button (selector: ${MENU_BUTTON_SELECTOR})`);
+    throw new Error(`Could not find nav menu button (selector: ${NAV_MENU_BUTTON_SELECTOR})`);
   }
   return button;
 }

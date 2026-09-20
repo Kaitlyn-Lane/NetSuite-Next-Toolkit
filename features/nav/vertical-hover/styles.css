@@ -1,0 +1,70 @@
+/* Vertical hover flyout menu. Black background, white text — placeholder
+   styling, real design comes later. */
+
+.nst-vh-root {
+  position: relative;
+  display: inline-block;
+}
+
+.nst-vh-list {
+  display: none;
+  margin: 0;
+  padding: 4px 0;
+  list-style: none;
+  position: absolute;
+  background: #000;
+  color: #fff;
+  white-space: nowrap;
+  z-index: 2147483647;
+}
+
+/* Top level: stacks above the nav button. */
+.nst-vh-list.nst-vh-toplevel {
+  bottom: 100%;
+  left: 0;
+}
+
+.nst-vh-root:hover > .nst-vh-toplevel {
+  display: block;
+}
+
+/* Every nested level: flies out beside its parent item, recursively. */
+.nst-vh-item {
+  position: relative;
+}
+
+.nst-vh-list.nst-vh-submenu {
+  bottom: 0;
+  left: 100%;
+}
+
+.nst-vh-item:hover > .nst-vh-submenu {
+  display: block;
+}
+
+.nst-vh-label {
+  display: block;
+  padding: 6px 16px;
+  color: #fff;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.nst-vh-label:hover {
+  background: #333;
+}
+
+/* NetSuite's own JET tooltip on the nav button renders via a shared popup
+   primitive, not a `title` attribute — so we can't just strip an
+   attribute to stop it. .ns-ui-toolkit-popup-core__content is the
+   tooltip's own (stable, non-hashed) content marker, but its surrounding
+   "surface" wrapper still paints a background even with the content
+   hidden — so instead hide whichever .oj-popup-layer currently contains
+   that content, using :has() rather than hardcoding that wrapper's own
+   class names (they look build-generated/hashed and could change on
+   NetSuite's next release). Scoped to only while our wrapper is hovered
+   (class toggled in index.ts), since .oj-popup-layer is a shared JET
+   primitive likely reused by other legitimate popups elsewhere. */
+html.nst-suppress-tooltip .oj-popup-layer:has(.ns-ui-toolkit-popup-core__content) {
+  display: none !important;
+}
