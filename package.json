@@ -13,12 +13,17 @@
   },
   "devDependencies": {
     "@types/chrome": "^0.3.0",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^4.7.0",
     "typescript": "^5.9.3",
     "vite": "^8.1.5",
     "web-ext": "^10.5.0",
     "wxt": "^0.21.4"
   },
   "dependencies": {
-    "@floating-ui/dom": "^1.8.0"
+    "react": "^19.3.0",
+    "react-aria-components": "^1.21.1",
+    "react-dom": "^19.3.0"
   }
 }

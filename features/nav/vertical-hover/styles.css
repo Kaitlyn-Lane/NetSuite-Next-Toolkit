@@ -1,48 +1,65 @@
 /* Vertical hover flyout menu. Black background, white text — placeholder
-   styling, real design comes later. */
+   styling, real design comes later. Positioning (position/left/top) is
+   set inline by react-aria-components' Popover — this file only owns
+   visual appearance, not layout. Class names (.react-aria-*) are the
+   library's own defaults, not ours. */
 
-.nst-vh-root {
-  position: relative;
-  display: inline-block;
-}
-
-/* Every level (top-level groups and every nested submenu) is detached to
-   document.body and positioned via Floating UI (see index.ts) rather than
-   CSS :hover/position — this avoids NetSuite's own ancestor overflow/
-   transform styles clipping or mispositioning a flyout, and lets Floating
-   UI flip/shift each level to stay in the viewport regardless of menu
-   size or where the trigger sits on screen. */
-.nst-vh-list {
-  display: none;
-  position: fixed;
-  margin: 0;
-  padding: 4px 0;
-  list-style: none;
+.react-aria-Popover {
   background: #000;
   color: #fff;
-  white-space: nowrap;
+  min-width: 140px;
   z-index: 2147483647;
 }
 
-.nst-vh-label {
+.react-aria-Menu {
+  margin: 0;
+  padding: 4px 0;
+  list-style: none;
+  outline: none;
+}
+
+.react-aria-MenuItem {
   display: block;
   padding: 6px 16px;
   color: #fff;
   text-decoration: none;
   cursor: pointer;
+  white-space: nowrap;
 }
 
-.nst-vh-label:hover {
+/* MenuItem renders as <a> when it has an href, <div> otherwise —
+   underline only the ones that are actually links. */
+a.react-aria-MenuItem {
+  text-decoration: underline;
+}
+
+/* Chevron on anything that expands to a submenu, link or not. */
+.react-aria-MenuItem[data-has-submenu]::after {
+  content: "›";
+  float: right;
+  margin-left: 24px;
+  text-decoration: none;
+}
+
+.react-aria-MenuItem[data-focused],
+.react-aria-MenuItem[data-hovered] {
   background: #333;
+}
+
+/* Path highlight: keep a trigger visually active while its own submenu
+   is open, even after the mouse has moved on to a deeper layer and this
+   item is no longer directly hovered. */
+.react-aria-MenuItem[data-open] {
+  background: #222;
 }
 
 /* Force white text regardless of link state — NetSuite's own page CSS
    evidently styles a:visited (that's why some links showed up yellow),
    and a:visited beats our plain class selector on specificity. */
-.nst-vh-label:link,
-.nst-vh-label:visited,
-.nst-vh-label:hover,
-.nst-vh-label:active {
+a.react-aria-MenuItem:link,
+a.react-aria-MenuItem:visited,
+a.react-aria-MenuItem:hover,
+a.react-aria-MenuItem:active {
   color: #fff !important;
 }
 
@@ -54,8 +71,8 @@
    hidden — so instead hide whichever .oj-popup-layer currently contains
    that content, using :has() rather than hardcoding that wrapper's own
    class names (they look build-generated/hashed and could change on
-   NetSuite's next release). Scoped to only while our wrapper is hovered
-   (class toggled in index.ts), since .oj-popup-layer is a shared JET
+   NetSuite's next release). Scoped to only while the button is hovered
+   (class toggled in index.tsx), since .oj-popup-layer is a shared JET
    primitive likely reused by other legitimate popups elsewhere. */
 html.nst-suppress-tooltip .oj-popup-layer:has(.ns-ui-toolkit-popup-core__content) {
   display: none !important;
