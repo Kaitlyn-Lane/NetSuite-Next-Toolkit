@@ -1,14 +1,23 @@
 import "./styles.css";
 
+import { computePosition, flip, offset, shift } from "@floating-ui/dom";
+
 import { NAV_MENU_BUTTON_SELECTOR } from "@/core/selectors";
 import { waitForElement } from "@/core/utils";
 import type { MenuContainerNode, MenuNode, NavExtraction } from "@/features/nav/build-menu/extractor";
 
 const NAV_MENU_STORAGE_KEY = "navMenu";
+const HIDE_DELAY_MS = 150;
 
-// Recursive: builds one <ul> per level, whether it's the top-level
-// shortcuts/menu/create groups or any nested container's children. Shown
-// via pure CSS :hover — no click/mouseenter state to manage.
+// Class toggled on <html> for as long as our wrapper is hovered — see the
+// matching CSS rule that only suppresses NetSuite's tooltip content while
+// this is present, instead of hiding that (shared) popup class everywhere.
+const TOOLTIP_SUPPRESS_CLASS = "nst-suppress-tooltip";
+
+// Recursive: builds one <ul> per level, nested inside its trigger <li> for
+// now — activateFlyouts() detaches each one to document.body afterward so
+// Floating UI can position it against the viewport instead of wherever
+// NetSuite's own layout happens to put it.
 function buildMenuList(nodes: MenuNode[]): HTMLUListElement {
   const list = document.createElement("ul");
   list.className = "nst-vh-list";
@@ -68,14 +77,114 @@ function buildTopLevelGroups(nav: NavExtraction): MenuContainerNode[] {
   ];
 }
 
-// Class toggled on <html> for as long as our wrapper is hovered — see the
-// matching CSS rule that only suppresses NetSuite's tooltip content while
-// this is present, instead of hiding that (shared) popup class everywhere.
-const TOOLTIP_SUPPRESS_CLASS = "nst-suppress-tooltip";
+// Recursively wires up show/hide + Floating UI positioning, level by
+// level, parent before children. Returns this level's full subtree (its
+// own flyout plus every flyout nested inside it, any depth) so the caller
+// (its parent, or activateFlyouts for the root) can use that list.
+//
+// Two separate rules govern closing, deliberately not the same mechanism:
+//  - Switching siblings (e.g. Shortcuts -> Menu) closes the old sibling's
+//    whole subtree immediately, no delay — handled right here, since a
+//    level knows its own direct children's subtrees.
+//  - Leaving the tree entirely closes everything after a grace period —
+//    handled by cancelGlobalHide/scheduleGlobalHide, one shared timer
+//    threaded through every level (not a per-level timer), so hovering
+//    *anywhere* in the tree keeps the whole thing alive, and the grace
+//    period only actually elapses once nothing anywhere is being hovered.
+function wireLevel(
+  trigger: HTMLElement,
+  flyout: HTMLUListElement,
+  placement: "top-start" | "right-start",
+  cancelGlobalHide: () => void,
+  scheduleGlobalHide: () => void,
+): HTMLElement[] {
+  const childEntries: { trigger: HTMLElement; submenu: HTMLUListElement }[] = [];
+  for (const li of Array.from(flyout.children)) {
+    const submenu = li.querySelector<HTMLUListElement>(":scope > .nst-vh-submenu");
+    if (submenu) {
+      childEntries.push({ trigger: li as HTMLElement, submenu });
+    }
+  }
 
-// Wraps the existing nav button in a positioned container so the flyout has
-// something reliable to anchor to, without touching the button's own
-// styling or its native click behavior.
+  // Detach each direct child submenu to body now — its own further-nested
+  // submenus are still inside it at this point, so they move along with
+  // it; the recursive wireLevel call below handles detaching those in turn.
+  for (const { submenu } of childEntries) {
+    document.body.appendChild(submenu);
+  }
+
+  async function updatePosition(): Promise<void> {
+    const { x, y } = await computePosition(trigger, flyout, {
+      strategy: "fixed",
+      placement,
+      // offset: small gap from the trigger. flip: swap to the opposite
+      // side if there's no room. shift: nudge within the viewport if it
+      // still doesn't fully fit — this is what actually fixes the
+      // "long menu overflows the page" problem, regardless of menu size
+      // or where the trigger sits on screen.
+      middleware: [offset(4), flip(), shift({ padding: 8 })],
+    });
+    flyout.style.left = `${x}px`;
+    flyout.style.top = `${y}px`;
+  }
+
+  trigger.addEventListener("mouseenter", () => {
+    cancelGlobalHide();
+    flyout.style.display = "block";
+    void updatePosition();
+  });
+  trigger.addEventListener("mouseleave", scheduleGlobalHide);
+  flyout.addEventListener("mouseenter", cancelGlobalHide);
+  flyout.addEventListener("mouseleave", scheduleGlobalHide);
+
+  // Recurse first so each child's full subtree is known before wiring the
+  // sibling-switching listeners below.
+  const childSubtrees = childEntries.map(({ trigger: childTrigger, submenu: childSubmenu }) => ({
+    submenu: childSubmenu,
+    subtree: wireLevel(childTrigger, childSubmenu, "right-start", cancelGlobalHide, scheduleGlobalHide),
+  }));
+
+  for (const { trigger: childTrigger, submenu: childSubmenu } of childEntries) {
+    childTrigger.addEventListener("mouseenter", () => {
+      for (const sibling of childSubtrees) {
+        if (sibling.submenu !== childSubmenu) {
+          for (const el of sibling.subtree) {
+            el.style.display = "none";
+          }
+        }
+      }
+    });
+  }
+
+  return [flyout, ...childSubtrees.flatMap((c) => c.subtree)];
+}
+
+function activateFlyouts(wrapper: HTMLElement, topLevel: HTMLUListElement): void {
+  document.body.appendChild(topLevel);
+
+  let globalHideTimer: ReturnType<typeof setTimeout> | undefined;
+  let allFlyouts: HTMLElement[] = [];
+
+  function cancelGlobalHide(): void {
+    clearTimeout(globalHideTimer);
+  }
+
+  function scheduleGlobalHide(): void {
+    clearTimeout(globalHideTimer);
+    globalHideTimer = setTimeout(() => {
+      for (const el of allFlyouts) {
+        el.style.display = "none";
+      }
+    }, HIDE_DELAY_MS);
+  }
+
+  allFlyouts = wireLevel(wrapper, topLevel, "top-start", cancelGlobalHide, scheduleGlobalHide);
+}
+
+// Wraps the existing nav button in a positioned container purely so we
+// have a stable trigger element to attach hover listeners to — it doesn't
+// need to be a positioning context anymore now that flyouts are
+// viewport-positioned via Floating UI.
 function wrapButton(button: HTMLElement): HTMLDivElement {
   // If NetSuite's hover tooltip here were driven by the `title` attribute,
   // clearing it would be enough — it isn't (confirmed: it's a JET popup
@@ -120,5 +229,6 @@ export async function runNavVerticalHover(): Promise<void> {
 
   const topLevelMenu = buildMenuList(buildTopLevelGroups(navMenu));
   topLevelMenu.classList.add("nst-vh-toplevel");
-  wrapper.appendChild(topLevelMenu);
+
+  activateFlyouts(wrapper, topLevelMenu);
 }

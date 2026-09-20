@@ -6,40 +6,22 @@
   display: inline-block;
 }
 
+/* Every level (top-level groups and every nested submenu) is detached to
+   document.body and positioned via Floating UI (see index.ts) rather than
+   CSS :hover/position — this avoids NetSuite's own ancestor overflow/
+   transform styles clipping or mispositioning a flyout, and lets Floating
+   UI flip/shift each level to stay in the viewport regardless of menu
+   size or where the trigger sits on screen. */
 .nst-vh-list {
   display: none;
+  position: fixed;
   margin: 0;
   padding: 4px 0;
   list-style: none;
-  position: absolute;
   background: #000;
   color: #fff;
   white-space: nowrap;
   z-index: 2147483647;
-}
-
-/* Top level: stacks above the nav button. */
-.nst-vh-list.nst-vh-toplevel {
-  bottom: 100%;
-  left: 0;
-}
-
-.nst-vh-root:hover > .nst-vh-toplevel {
-  display: block;
-}
-
-/* Every nested level: flies out beside its parent item, recursively. */
-.nst-vh-item {
-  position: relative;
-}
-
-.nst-vh-list.nst-vh-submenu {
-  bottom: 0;
-  left: 100%;
-}
-
-.nst-vh-item:hover > .nst-vh-submenu {
-  display: block;
 }
 
 .nst-vh-label {
@@ -52,6 +34,16 @@
 
 .nst-vh-label:hover {
   background: #333;
+}
+
+/* Force white text regardless of link state — NetSuite's own page CSS
+   evidently styles a:visited (that's why some links showed up yellow),
+   and a:visited beats our plain class selector on specificity. */
+.nst-vh-label:link,
+.nst-vh-label:visited,
+.nst-vh-label:hover,
+.nst-vh-label:active {
+  color: #fff !important;
 }
 
 /* NetSuite's own JET tooltip on the nav button renders via a shared popup
