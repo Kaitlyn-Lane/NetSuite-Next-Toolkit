@@ -14,10 +14,9 @@ const HIDE_DELAY_MS = 150;
 // this is present, instead of hiding that (shared) popup class everywhere.
 const TOOLTIP_SUPPRESS_CLASS = "nst-suppress-tooltip";
 
-// Recursive: builds one <ul> per level, nested inside its trigger <li> for
-// now — activateFlyouts() detaches each one to document.body afterward so
-// Floating UI can position it against the viewport instead of wherever
-// NetSuite's own layout happens to put it.
+// Recursive: builds one <ul> per level, nested inside its trigger <li>.
+// Positioning is handled separately by activateFlyouts()/wireLevel() via
+// Floating UI (position: fixed against the viewport), not by this nesting.
 function buildMenuList(nodes: MenuNode[]): HTMLUListElement {
   const list = document.createElement("ul");
   list.className = "nst-vh-list";
@@ -77,28 +76,20 @@ function buildTopLevelGroups(nav: NavExtraction): MenuContainerNode[] {
   ];
 }
 
-// EXPERIMENT: same as the body-detaching version, minus the detaching —
-// submenus stay nested inside their trigger <li> (as buildMenuList made
-// them), relying only on `position: fixed` to place them against the
-// viewport. This is testing whether the portal-to-body complexity from
-// the previous commit was actually needed, or just a defensive guess
-// about NetSuite's ancestor CSS that never gets exercised in practice.
-// If any flyout turns up clipped/mispositioned, that confirms it was
-// needed and this experiment should be reverted (git revert of the
-// previous commit's follow-up).
+// Recursively wires up show/hide + Floating UI positioning, level by
+// level, parent before children. Submenus stay nested inside their
+// trigger <li> — position: fixed places them against the viewport
+// regardless of DOM nesting, so no document.body portaling is needed.
 //
-// Two separate rules still govern closing:
+// Two separate rules govern closing:
 //  - Switching siblings (e.g. Shortcuts -> Menu) closes the old sibling's
 //    whole subtree immediately, no delay.
 //  - Leaving the tree entirely closes everything after a grace period —
 //    one shared timer threaded through every level (not a per-level
 //    timer), so hovering *anywhere* in the tree keeps the whole thing
 //    alive, and the grace period only elapses once nothing anywhere is
-//    being hovered.
-//
-// Since nothing is detached anymore, "this level's descendants" and
-// "this level's siblings" can go back to plain live DOM queries instead
-// of manually threading subtree arrays through the recursion.
+//    being hovered. See scheduleGlobalHide in activateFlyouts for why
+//    that timer double-checks cursor position before actually closing.
 function wireLevel(
   trigger: HTMLElement,
   flyout: HTMLUListElement,
@@ -155,6 +146,33 @@ function wireLevel(
 function activateFlyouts(wrapper: HTMLElement, topLevel: HTMLUListElement): void {
   wrapper.appendChild(topLevel);
 
+  // Tracked so the close timer can double-check the cursor's actual
+  // position before trusting a mouseleave — see scheduleGlobalHide below.
+  // mousemove stops firing once the cursor leaves the document entirely
+  // (up into the browser's own chrome, or off-window), which would
+  // otherwise freeze lastMouseX/Y at a stale in-page position — track
+  // that separately so a real leave isn't mistaken for "still hovering"
+  // using coordinates that no longer mean anything.
+  let lastMouseX = 0;
+  let lastMouseY = 0;
+  let cursorInDocument = true;
+  document.addEventListener(
+    "mousemove",
+    (event) => {
+      lastMouseX = event.clientX;
+      lastMouseY = event.clientY;
+      cursorInDocument = true;
+    },
+    { passive: true },
+  );
+  document.documentElement.addEventListener(
+    "mouseleave",
+    () => {
+      cursorInDocument = false;
+    },
+    { passive: true },
+  );
+
   let globalHideTimer: ReturnType<typeof setTimeout> | undefined;
 
   function cancelGlobalHide(): void {
@@ -163,7 +181,33 @@ function activateFlyouts(wrapper: HTMLElement, topLevel: HTMLUListElement): void
 
   function scheduleGlobalHide(): void {
     clearTimeout(globalHideTimer);
+    console.debug("[NST debug] scheduleGlobalHide armed");
     globalHideTimer = setTimeout(() => {
+      // A mouseleave fired, but that can happen even while the cursor is
+      // still visually on our UI — e.g. a newly-opened deeper flyout
+      // rendering adjacent to (or slightly overlapping) its own trigger,
+      // or a flyout nudged by `shift()` right up against another one's
+      // edge. Rather than chase every individual boundary case, verify
+      // against where the cursor actually is before trusting the leave —
+      // unless it's left the document entirely, in which case there's
+      // nothing on-page to check against and it's an unambiguous leave.
+      const atCursor = cursorInDocument ? document.elementsFromPoint(lastMouseX, lastMouseY) : [];
+      const matched = atCursor.find((el) => el.closest(".nst-vh-root, .nst-vh-list") !== null);
+      console.debug("[NST debug] hide check", {
+        cursorInDocument,
+        lastMouseX,
+        lastMouseY,
+        matchedRect: matched?.closest(".nst-vh-root, .nst-vh-list")?.getBoundingClientRect(),
+        topLevelRect: topLevel.getBoundingClientRect(),
+        atCursor: atCursor.map((el) => `${el.tagName}.${el.className}`),
+        matched: matched ? `${matched.tagName}.${matched.className}` : null,
+      });
+
+      if (matched) {
+        return;
+      }
+
+      console.debug("[NST debug] CLOSING EVERYTHING");
       topLevel.style.display = "none";
       for (const el of topLevel.querySelectorAll<HTMLElement>(".nst-vh-submenu")) {
         el.style.display = "none";
