@@ -1,0 +1,145 @@
+/* Shared design tokens + primitives for the popup and options pages, so
+   both stay visually consistent instead of drifting independently. */
+:root {
+  --nst-accent: #4f46e5;
+  --nst-accent-hover: #4338ca;
+  --nst-bg: #ffffff;
+  --nst-text: #1f2430;
+  --nst-text-muted: #6b7280;
+  --nst-border: #e5e7eb;
+  --nst-surface: #f9fafb;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --nst-accent: #6366f1;
+    --nst-accent-hover: #818cf8;
+    --nst-bg: #16181d;
+    --nst-text: #e5e7eb;
+    --nst-text-muted: #9aa0ac;
+    --nst-border: #2a2e37;
+    --nst-surface: #1d2027;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  background: var(--nst-bg);
+  color: var(--nst-text);
+}
+
+.section-label {
+  margin: 0 0 8px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--nst-text-muted);
+}
+
+.btn {
+  font: inherit;
+  border-radius: 8px;
+  cursor: pointer;
+  transition:
+    background-color 120ms ease,
+    opacity 120ms ease;
+}
+
+.btn-primary {
+  padding: 9px 12px;
+  border: none;
+  background: var(--nst-accent);
+  color: #fff;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--nst-accent-hover);
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.btn-link {
+  padding: 6px;
+  background: none;
+  border: none;
+  color: var(--nst-accent);
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.btn-link:hover {
+  text-decoration: underline;
+}
+
+/* Toggle switch: a labeled row containing `.switch` (an input wrapped with
+   a `.switch-track` sibling driven by the `:checked ~` combinator). */
+.switch {
+  position: relative;
+  flex-shrink: 0;
+  width: 34px;
+  height: 20px;
+}
+
+.switch input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.switch-track {
+  position: absolute;
+  inset: 0;
+  background: var(--nst-border);
+  border-radius: 999px;
+  transition: background-color 150ms ease;
+}
+
+.switch-track::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  background: #fff;
+  border-radius: 50%;
+  transition: transform 150ms ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+}
+
+.switch input:checked ~ .switch-track {
+  background: var(--nst-accent);
+}
+
+.switch input:checked ~ .switch-track::after {
+  transform: translateX(14px);
+}
+
+.switch input:focus-visible ~ .switch-track {
+  outline: 2px solid var(--nst-accent);
+  outline-offset: 2px;
+}
+
+.callout {
+  background: var(--nst-surface);
+  border: 1px solid var(--nst-border);
+  border-left: 3px solid var(--nst-accent);
+  border-radius: 6px;
+  padding: 8px 12px;
+}
