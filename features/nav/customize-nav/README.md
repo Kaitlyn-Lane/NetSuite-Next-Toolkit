@@ -6,53 +6,63 @@ nested under it. Changes are read by `features/nav/vertical-hover` at render
 time — they only take effect after the user refreshes the NetSuite tab,
 there's no live-reload wiring here.
 
+## Storage design
+
+Hide flags are embedded directly on the scraped tree itself — `MenuNode.hidden`
+and `NavExtraction.hiddenSections` (both in `features/nav/build-menu/extractor.ts`)
+— and persisted back under the same single `chrome.storage.local["navMenu"]`
+key that `build-menu`/`vertical-hover` already read and write. There's
+deliberately no second storage key or content-derived key scheme to keep in
+sync with the tree: toggling a node just flips its own `hidden` field and
+writes the whole `NavExtraction` back.
+
+**Known, accepted limitation**: re-running "Create Menu Nav" overwrites
+`navMenu` wholesale with a fresh scrape, which has no `hidden` flags set —
+so today, a rebuild silently clears all hidden preferences. Preserving them
+across a rebuild (e.g. snapshotting the old tree, re-pairing hidden state
+back onto the new one by matching content) was discussed and intentionally
+left out of scope for now, not overlooked.
+
 ## Files
 
-Low-level contract (content-derived keys + storage helpers — treat as a
-fixed API, the pieces below don't reimplement any of this):
-
-- `nodeKey.ts` — `NavSection`, `getSectionKey` (a whole top-level layer),
-  `getNodeKey` (one node, keyed on `section` + the chain of ancestor nodes
-  down to it, not array position, so reordering siblings doesn't invalidate
-  a saved flag).
-- `storage.ts` — `getHiddenKeys`/`setHiddenKeys`/`setNodeHidden` over
-  `chrome.storage.local["navHiddenKeys"]`.
-- `filterHidden.ts` — `filterHiddenExtraction`, applies the hidden-key set to
-  a scraped `NavExtraction`. Used by `vertical-hover`, not by this UI.
-
-UI (reads `navMenu` + the hidden-key set, renders the tree, writes back on
-toggle):
-
-- `CustomizeNavTable.tsx` — top-level component. Loads `navMenu` from
-  `chrome.storage.local` and the hidden-key set, renders one `SectionRow`
-  per top-level layer, and shows a message (no button of its own) if nothing
-  has been scraped yet.
+- `filterHidden.ts` — `filterHiddenExtraction(extraction)`, applies the
+  embedded hide flags to a scraped `NavExtraction`, dropping hidden nodes
+  (and everything nested under a hidden container) and emptying any section
+  whose `hiddenSections` flag is set. Used by `vertical-hover`, not by this
+  UI.
+- `storage.ts` — `getNavMenu`/`setNavMenu` over the shared `navMenu` key.
+- `CustomizeNavTable.tsx` — top-level component. Loads `navMenu` on mount,
+  renders one `SectionRow` per top-level layer, and shows a message (no
+  button of its own) if nothing has been scraped yet. Owns the two toggle
+  handlers: `handleToggleSection` (immutable — writes into
+  `hiddenSections`) and `handleToggleNode` (mutates the target node's own
+  `hidden` field in place — every row below was handed that exact node
+  object by reference through the recursion, not a copy — then
+  shallow-clones the top-level object so React re-renders and persists the
+  whole tree).
 - `SectionRow.tsx` / `NodeRow.tsx` — one row per section / per node,
-  recursing to arbitrary depth. Each row's own switch writes **only that
-  node's own key** via `setNodeHidden` — never fans out to descendants.
-  `filterHiddenExtraction` already treats a hidden ancestor as hiding its
-  whole subtree at read time, so a cascading write would be redundant, would
-  bloat storage, and would make it impossible to independently re-show a
-  child later. The cascade is still shown visually though: `NodeRow` threads
-  an `ancestorHidden` boolean down through the recursion, and dims +
-  disables the switch on anything under a hidden ancestor, since toggling it
-  individually would have no effect while the ancestor stays hidden.
+  recursing to arbitrary depth. Neither writes to a descendant when
+  toggled — only the row's own node/section. The cascade is shown visually
+  instead: `NodeRow` threads an `ancestorHidden` boolean down through the
+  recursion, dimming + disabling the switch on anything under a hidden
+  ancestor, since toggling it individually would have no effect while the
+  ancestor stays hidden (`filterHiddenExtraction` drops the whole subtree
+  regardless of a descendant's own flag).
 - `CreateNavMenuButton.tsx` — the "Create Menu Nav" scrape trigger, pulled
   out of `entrypoints/popup/main.ts` into a shared component so both the
   popup and the options page can trigger a re-scrape without duplicating the
   `BUILD_NAV_MENU` messaging logic.
 
-`index.ts` re-exports the above (including the fixed contract files) as this
-feature's public surface.
+`index.ts` re-exports the above as this feature's public surface.
 
 ## Data flow
 
-`chrome.storage.local` (`navMenu`, `navHiddenKeys`) → `CustomizeNavTable`
-loads both on mount → renders the tree, each row disabled/dimmed if some
-ancestor's key is already in the hidden set → toggling a row updates local
-state optimistically and calls `setNodeHidden(key, hidden)` → next time
-`vertical-hover` runs (i.e. after a tab refresh), `filterHiddenExtraction`
-reads the same `navHiddenKeys` and drops the matching nodes.
+`chrome.storage.local["navMenu"]` → `CustomizeNavTable` loads it on mount →
+renders the tree, each row disabled/dimmed if some ancestor is already
+hidden → toggling a row updates local state and persists the full,
+updated `NavExtraction` back to the same key → next time `vertical-hover`
+runs (i.e. after a tab refresh), `filterHiddenExtraction` reads the same
+object and drops the flagged nodes/sections.
 
 Not yet mounted anywhere — wiring `CreateNavMenuButton` and `CustomizeNavTable`
 into `entrypoints/popup/` and a new `entrypoints/options/` is being handled

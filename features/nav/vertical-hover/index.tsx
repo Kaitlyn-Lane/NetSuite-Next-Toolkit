@@ -4,7 +4,6 @@ import { NAV_MENU_BUTTON_SELECTOR } from "@/core/selectors";
 import { waitForElement } from "@/core/utils";
 import type { MenuContainerNode, MenuNode, NavExtraction } from "@/features/nav/build-menu/extractor";
 import { filterHiddenExtraction } from "@/features/nav/customize-nav/filterHidden";
-import { getHiddenKeys } from "@/features/nav/customize-nav/storage";
 
 import { RootMenu } from "./RootMenu";
 import "./styles.css";
@@ -83,8 +82,7 @@ export async function runNavVerticalHover(): Promise<void> {
     return;
   }
 
-  const hiddenKeys = await getHiddenKeys();
-  const filteredNavMenu = filterHiddenExtraction(navMenu, hiddenKeys);
+  const filteredNavMenu = filterHiddenExtraction(navMenu);
 
   const button = (await waitForElement(NAV_MENU_BUTTON_SELECTOR, { timeout: 10000 })) as HTMLElement;
   suppressNativeTooltip(button);

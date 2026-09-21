@@ -1,19 +1,14 @@
 import { useCallback, useEffect, useState } from "react";
 
-import type { NavExtraction } from "@/features/nav/build-menu/extractor";
+import type { MenuNode, NavExtraction, NavSection } from "@/features/nav/build-menu/extractor";
 
-import { NAV_SECTIONS } from "./nodeKey";
 import { SectionRow } from "./SectionRow";
-import { getHiddenKeys, setNodeHidden } from "./storage";
+import { getNavMenu, setNavMenu } from "./storage";
 import "./styles.css";
 
-// Duplicated literal — "navMenu" is already duplicated as a literal in both
-// features/nav/build-menu/index.ts and features/nav/vertical-hover/index.tsx,
-// so a third copy here follows the existing pattern rather than introducing
-// a shared constant unprompted.
-const NAV_MENU_STORAGE_KEY = "navMenu";
+const NAV_SECTIONS: readonly NavSection[] = ["create", "shortcuts", "menu"];
 
-const SECTION_LABELS: Record<(typeof NAV_SECTIONS)[number], string> = {
+const SECTION_LABELS: Record<NavSection, string> = {
   menu: "Menu",
   shortcuts: "Shortcuts",
   create: "Create",
@@ -23,40 +18,49 @@ const SECTION_LABELS: Record<(typeof NAV_SECTIONS)[number], string> = {
 type LoadState = NavExtraction | null | undefined;
 
 export function CustomizeNavTable() {
-  const [navMenu, setNavMenu] = useState<LoadState>(undefined);
-  const [hiddenKeys, setHiddenKeysState] = useState<Set<string>>(new Set());
+  const [navMenu, setNavMenuState] = useState<LoadState>(undefined);
 
   const reload = useCallback(async () => {
-    const stored = await chrome.storage.local.get(NAV_MENU_STORAGE_KEY);
-    const extraction = stored[NAV_MENU_STORAGE_KEY] as NavExtraction | undefined;
-    setNavMenu(extraction ?? null);
-    setHiddenKeysState(await getHiddenKeys());
+    setNavMenuState((await getNavMenu()) ?? null);
   }, []);
 
   useEffect(() => {
     void reload();
   }, [reload]);
 
-  // Optimistic update, then persist. Per the storage contract, this writes
-  // only the toggled node's own key — never fans out to descendants.
-  // filterHiddenExtraction already treats a hidden ancestor as hiding its
-  // whole subtree at read time, so descendant writes would be redundant and
-  // would make it impossible to independently re-show a child later.
-  const handleToggle = useCallback((key: string, hidden: boolean) => {
-    setHiddenKeysState((prev) => {
-      const next = new Set(prev);
-      if (hidden) {
-        next.add(key);
-      } else {
-        next.delete(key);
-      }
-      return next;
-    });
-
-    setNodeHidden(key, hidden).catch((error: unknown) => {
-      console.error("[NST] customize-nav: failed to save hide flag", error);
+  // Persists the whole updated NavExtraction under the single "navMenu" key
+  // — hide flags live directly on it (see extractor.ts), so there's no
+  // second store to keep in sync.
+  const persist = useCallback((updated: NavExtraction) => {
+    setNavMenuState(updated);
+    setNavMenu(updated).catch((error: unknown) => {
+      console.error("[NST] customize-nav: failed to save nav menu", error);
     });
   }, []);
+
+  const handleToggleSection = useCallback(
+    (section: NavSection, hidden: boolean) => {
+      if (!navMenu) return;
+      persist({
+        ...navMenu,
+        hiddenSections: { ...navMenu.hiddenSections, [section]: hidden },
+      });
+    },
+    [navMenu, persist],
+  );
+
+  // Mutates the node in place (it's the same object living inside `navMenu`
+  // — every row below was handed this exact reference through the
+  // recursion, not a copy), then shallow-clones the top-level object so
+  // React sees a new reference and re-renders.
+  const handleToggleNode = useCallback(
+    (node: MenuNode, hidden: boolean) => {
+      if (!navMenu) return;
+      node.hidden = hidden;
+      persist({ ...navMenu });
+    },
+    [navMenu, persist],
+  );
 
   if (navMenu === undefined) {
     return <p className="cn-status-message">Loading…</p>;
@@ -80,8 +84,9 @@ export function CustomizeNavTable() {
             section={section}
             label={SECTION_LABELS[section]}
             nodes={navMenu[section]}
-            hiddenKeys={hiddenKeys}
-            onToggle={handleToggle}
+            hidden={navMenu.hiddenSections?.[section] === true}
+            onToggleSection={handleToggleSection}
+            onToggleNode={handleToggleNode}
           />
         ))}
       </ul>

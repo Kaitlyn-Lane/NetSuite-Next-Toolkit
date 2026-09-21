@@ -8,6 +8,9 @@ export interface MenuContainerNode {
   automationType: string | null;
   href: string | null;
   children: MenuNode[];
+  // Set by features/nav/customize-nav, not by extraction — omitted (not
+  // false) means visible. Hiding a container hides everything under it.
+  hidden?: boolean;
 }
 
 export interface MenuLeafNode {
@@ -15,14 +18,23 @@ export interface MenuLeafNode {
   label: string | undefined;
   automationType: string | null;
   href: string | null;
+  // Set by features/nav/customize-nav, not by extraction.
+  hidden?: boolean;
 }
 
 export type MenuNode = MenuContainerNode | MenuLeafNode;
+
+export type NavSection = "menu" | "shortcuts" | "create";
 
 export interface NavExtraction {
   menu: MenuNode[];
   shortcuts: MenuNode[];
   create: MenuNode[];
+  // Hide flags for the three top-level layers themselves, set by
+  // features/nav/customize-nav. These three aren't MenuNodes — they're this
+  // interface's own fields — so they can't carry a `hidden` field the way a
+  // MenuNode does, hence the separate map.
+  hiddenSections?: Partial<Record<NavSection, boolean>>;
 }
 
 function extractShortcutAndCreateSections(): MenuContainerNode[] {

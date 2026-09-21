@@ -3,28 +3,20 @@ import { Switch } from "react-aria-components";
 
 import type { MenuNode } from "@/features/nav/build-menu/extractor";
 
-import { getNodeKey, type NavSection } from "./nodeKey";
-
 interface NodeRowProps {
-  section: NavSection;
-  // Ancestors down to and including `node` — passed straight to getNodeKey,
-  // so a saved hide flag is keyed on content, not position.
-  path: MenuNode[];
   node: MenuNode;
   depth: number;
   // Whether some ancestor above this node (a section or a container) is
   // itself hidden. Purely a display concern: filterHiddenExtraction already
   // treats a hidden ancestor as hiding this whole subtree at read time, so
   // this only drives dimming + disabling the switch here — it must never be
-  // written to storage as this node's own flag.
+  // written as this node's own `hidden` flag.
   ancestorHidden: boolean;
-  hiddenKeys: Set<string>;
-  onToggle: (key: string, hidden: boolean) => void;
+  onToggle: (node: MenuNode, hidden: boolean) => void;
 }
 
-export function NodeRow({ section, path, node, depth, ancestorHidden, hiddenKeys, onToggle }: NodeRowProps) {
-  const key = getNodeKey(section, path);
-  const isHidden = hiddenKeys.has(key);
+export function NodeRow({ node, depth, ancestorHidden, onToggle }: NodeRowProps) {
+  const isHidden = node.hidden === true;
   const effectivelyHidden = ancestorHidden || isHidden;
   const children = node.type === "container" ? node.children : [];
   const hasChildren = children.length > 0;
@@ -52,7 +44,7 @@ export function NodeRow({ section, path, node, depth, ancestorHidden, hiddenKeys
         <Switch
           isSelected={!isHidden}
           isDisabled={ancestorHidden}
-          onChange={(selected) => onToggle(key, !selected)}
+          onChange={(selected) => onToggle(node, !selected)}
           aria-label={`Show "${label}" in nav`}
         >
           <span className="cn-switch-indicator" />
@@ -66,12 +58,9 @@ export function NodeRow({ section, path, node, depth, ancestorHidden, hiddenKeys
           {children.map((child, i) => (
             <NodeRow
               key={i}
-              section={section}
-              path={[...path, child]}
               node={child}
               depth={depth + 1}
               ancestorHidden={effectivelyHidden}
-              hiddenKeys={hiddenKeys}
               onToggle={onToggle}
             />
           ))}
