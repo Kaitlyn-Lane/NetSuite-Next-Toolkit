@@ -77,6 +77,18 @@
   min-height: 1.1em;
 }
 
+.cn-filter-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.cn-filter-label {
+  font-size: 12px;
+  color: var(--nst-text-muted);
+}
+
 .cn-tree,
 .cn-tree-children {
   list-style: none;

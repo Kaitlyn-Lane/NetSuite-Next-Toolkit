@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
-import { Button } from "react-aria-components";
+import { Button, Switch } from "react-aria-components";
 
-import { clearBindingForHref, getKeyBindingMap, setKeyBinding } from "@/features/nav/keybindings";
+import { clearBindingForHref, filterToKeyBound, getKeyBindingMap, setKeyBinding } from "@/features/nav/keybindings";
 import type { KeyBinding, KeyBindingMap } from "@/features/nav/keybindings";
 import { getNavMenu, setNavMenu } from "@/features/nav/storage";
 import type { MenuNode, NavExtraction } from "@/features/nav/types";
@@ -42,6 +42,7 @@ export function CustomizeNavTable() {
   const [keyBindingMap, setKeyBindingMapState] = useState<KeyBindingMap>({});
   const [dirty, setDirty] = useState(false);
   const [saveStatus, setSaveStatus] = useState("");
+  const [showOnlyKeyBound, setShowOnlyKeyBound] = useState(false);
 
   const reload = useCallback(async () => {
     setNavMenuState((await getNavMenu()) ?? null);
@@ -108,11 +109,22 @@ export function CustomizeNavTable() {
     );
   }
 
+  // Prunes branches that have neither a binding themselves nor a bound
+  // descendant — an ancestor leading to a bound leaf stays visible so the
+  // tree structure around it still makes sense.
+  const visibleNodes = showOnlyKeyBound ? filterToKeyBound(navMenu, keyBindingMap) : navMenu;
+
   return (
     <div className="cn-customize-nav">
       <SaveRow dirty={dirty} status={saveStatus} onSave={handleSave} position="top" />
+      <div className="cn-filter-row">
+        <Switch className="switch" isSelected={showOnlyKeyBound} onChange={setShowOnlyKeyBound}>
+          <span className="switch-track" />
+        </Switch>
+        <span className="cn-filter-label">Show only keybound entries</span>
+      </div>
       <ul className="cn-tree" role="tree">
-        {navMenu.map((node, i) => (
+        {visibleNodes.map((node, i) => (
           <NodeRow
             key={i}
             node={node}
@@ -121,6 +133,7 @@ export function CustomizeNavTable() {
             onToggle={handleToggleNode}
             keyBindingMap={keyBindingMap}
             onAssignKeyBinding={handleAssignKeyBinding}
+            showOnlyKeyBound={showOnlyKeyBound}
           />
         ))}
       </ul>

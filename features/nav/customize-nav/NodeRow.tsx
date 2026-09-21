@@ -1,7 +1,7 @@
 import { useState, type MouseEvent } from "react";
 import { Switch } from "react-aria-components";
 
-import { KeyBindingSelect } from "@/features/nav/keybindings";
+import { filterToKeyBound, KeyBindingSelect } from "@/features/nav/keybindings";
 import type { KeyBinding, KeyBindingMap } from "@/features/nav/keybindings";
 import type { MenuNode } from "@/features/nav/types";
 
@@ -17,6 +17,7 @@ interface NodeRowProps {
   onToggle: (node: MenuNode, hidden: boolean) => void;
   keyBindingMap: KeyBindingMap;
   onAssignKeyBinding: (href: string, binding: KeyBinding | undefined) => void;
+  showOnlyKeyBound: boolean;
 }
 
 export function NodeRow({
@@ -26,10 +27,15 @@ export function NodeRow({
   onToggle,
   keyBindingMap,
   onAssignKeyBinding,
+  showOnlyKeyBound,
 }: NodeRowProps) {
   const isHidden = node.hidden === true;
   const effectivelyHidden = ancestorHidden || isHidden;
-  const children = node.type === "container" ? node.children : [];
+  const rawChildren = node.type === "container" ? node.children : [];
+  // Filtered for display only — the expand chevron and rendered <ul> below
+  // both need to agree that a container with only now-hidden children has
+  // nothing to show, so it doesn't offer to expand into an empty list.
+  const children = showOnlyKeyBound ? filterToKeyBound(rawChildren, keyBindingMap) : rawChildren;
   const hasChildren = children.length > 0;
   const [expanded, setExpanded] = useState(true);
   const label = node.label ?? "(untitled)";
@@ -111,6 +117,7 @@ export function NodeRow({
               onToggle={onToggle}
               keyBindingMap={keyBindingMap}
               onAssignKeyBinding={onAssignKeyBinding}
+              showOnlyKeyBound={showOnlyKeyBound}
             />
           ))}
         </ul>

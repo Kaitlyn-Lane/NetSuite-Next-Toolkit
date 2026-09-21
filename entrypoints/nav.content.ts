@@ -14,10 +14,15 @@ import { runNavVerticalHover } from "@/features/nav/vertical-hover";
 //
 // build-menu is deliberately never gated by a feature flag: it only runs
 // when the user clicks the popup button, so there's nothing to lock behind
-// a setting. Auto-injected features (vertical-hover today) should check
-// isFeatureEnabled(...) before their safeInit(...) call — flags are read
-// once at content-script load, so toggling one requires a tab refresh,
-// same as re-running the scraper.
+// a setting. Auto-injected features that should be independently toggle-
+// able (vertical-hover today) check isFeatureEnabled(...) before their
+// safeInit(...) call — flags are read once at content-script load, so
+// toggling one requires a tab refresh, same as re-running the scraper.
+//
+// nav-keybindings is auto-injected too but deliberately NOT its own flag —
+// it's a detail of navigation customization (features/nav/customize-nav),
+// not a separate feature a user would think to toggle on its own, so it
+// always runs, same as build-menu.
 export default defineContentScript({
   matches: NETSUITE_MATCHES,
   async main() {
@@ -25,9 +30,7 @@ export default defineContentScript({
       safeInit("nav-vertical-hover", runNavVerticalHover);
     }
 
-    if (await isFeatureEnabled("navKeybindings")) {
-      safeInit("nav-keybindings", runKeybindingListener);
-    }
+    safeInit("nav-keybindings", runKeybindingListener);
 
     chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       if (!isBuildNavMenuRequest(message)) {

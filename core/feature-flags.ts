@@ -18,12 +18,6 @@ export const FEATURE_FLAGS: FeatureFlag[] = [
       "Replaces NetSuite's default nav menu with a hover flyout built from the scraped menu data.",
     defaultEnabled: true,
   },
-  {
-    id: "navKeybindings",
-    name: "Nav Keybindings",
-    description: "Jump straight to a bound link with Alt+1 through Alt+9 or Alt+0.",
-    defaultEnabled: true,
-  },
 ];
 
 const STORAGE_KEY = "featureFlags";

@@ -50,13 +50,20 @@ key set was: keep the common case cheap and simple.
 - `types.ts` — `KEY_BINDINGS` (the fixed set), `KeyBinding`, `KeyBindingMap`.
 - `storage.ts` — `getKeyBindingMap`/`setKeyBinding`/`clearBindingForHref`
   over the `navKeyBindings` key.
-- `listen.ts` — `runKeybindingListener()`, registered from
-  `entrypoints/nav.content.ts` behind the `navKeybindings` feature flag
-  (see `core/feature-flags.ts`), the same way `vertical-hover` is.
+- `listen.ts` — `runKeybindingListener()`, registered unconditionally from
+  `entrypoints/nav.content.ts` (`safeInit("nav-keybindings", ...)`, no
+  `isFeatureEnabled(...)` check) — this is a detail of navigation
+  customization, not a feature a user would toggle on its own, so unlike
+  `vertical-hover` it has no entry in `core/feature-flags.ts` at all. It
+  still lives in its own folder for organization, same as any other nav
+  sub-feature.
 - `KeyBindingSelect.tsx` — the per-row `<select>` in the Customize Nav
   tree (`features/nav/customize-nav/NodeRow.tsx`) for assigning a binding
   to that node's `href`. Rendered only for nodes that have one — there's
   nothing to jump to otherwise.
+- `filter.ts` — `filterToKeyBound(nodes, keyBindingMap)`, used by
+  `CustomizeNavTable`'s "show only keybound" toggle to keep a node visible
+  if it (or anything nested under it) has a binding, dropping the rest.
 
 Unlike hide flags (batched behind a Save button, since each save writes the
 whole nav tree), a keybinding change is persisted immediately —

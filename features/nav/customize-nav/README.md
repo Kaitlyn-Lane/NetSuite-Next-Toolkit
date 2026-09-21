@@ -48,7 +48,12 @@ left out of scope for now, not overlooked.
   nothing has been scraped yet. Toggling a node mutates it in place (every
   row was handed that exact node object by reference through the
   recursion, not a copy) and marks the tree dirty; a Save button persists
-  the whole tree in one write, rather than writing on every toggle.
+  the whole tree in one write, rather than writing on every toggle. A
+  "show only keybound entries" switch above the tree filters it through
+  `features/nav/keybindings`' `filterToKeyBound` — display-only (it never
+  mutates `navMenu`), and threaded down through `NodeRow` so a container's
+  own expand chevron and child count agree with what's actually rendered
+  under it.
 - `NodeRow.tsx` — one row per node, recursing to arbitrary depth starting
   at the top-level array itself (depth 0). Toggling a row never writes to
   its descendants — only its own node. The cascade is shown visually
