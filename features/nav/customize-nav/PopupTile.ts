@@ -21,7 +21,7 @@ export function mountCustomizeNavTile(container: HTMLElement): void {
     <button type="button" id="customize-nav-tile" class="nav-tile">
       <span class="nav-tile-text">
         <span class="nav-tile-title">Customize Nav</span>
-        <span class="nav-tile-desc">Hide menu items, sections, and links</span>
+        <span class="nav-tile-desc">Hide menu items and assign Alt+ shortcuts</span>
       </span>
       <span class="nav-tile-chevron" aria-hidden="true">›</span>
     </button>

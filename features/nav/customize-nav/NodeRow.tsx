@@ -1,6 +1,8 @@
 import { useState, type MouseEvent } from "react";
 import { Switch } from "react-aria-components";
 
+import { KeyBindingSelect } from "@/features/nav/keybindings";
+import type { KeyBinding, KeyBindingMap } from "@/features/nav/keybindings";
 import type { MenuNode } from "@/features/nav/types";
 
 interface NodeRowProps {
@@ -13,24 +15,46 @@ interface NodeRowProps {
   // written as this node's own `hidden` flag.
   ancestorHidden: boolean;
   onToggle: (node: MenuNode, hidden: boolean) => void;
+  keyBindingMap: KeyBindingMap;
+  onAssignKeyBinding: (href: string, binding: KeyBinding | undefined) => void;
 }
 
-export function NodeRow({ node, depth, ancestorHidden, onToggle }: NodeRowProps) {
+export function NodeRow({
+  node,
+  depth,
+  ancestorHidden,
+  onToggle,
+  keyBindingMap,
+  onAssignKeyBinding,
+}: NodeRowProps) {
   const isHidden = node.hidden === true;
   const effectivelyHidden = ancestorHidden || isHidden;
   const children = node.type === "container" ? node.children : [];
   const hasChildren = children.length > 0;
   const [expanded, setExpanded] = useState(true);
   const label = node.label ?? "(untitled)";
+  const href = node.href;
+
+  // The binding, if any, currently pointing at this node's own href — a
+  // plain scan over keyBindingMap (at most 10 entries), not a tree walk.
+  const currentBinding = href
+    ? (Object.keys(keyBindingMap) as KeyBinding[]).find((key) => keyBindingMap[key] === href)
+    : undefined;
 
   // Lets a click anywhere on the row toggle it, not just the switch itself
-  // — except clicks that land on the switch or the expand/collapse button,
-  // which already handle themselves (the switch's own onChange would
-  // otherwise double-fire alongside this).
+  // — except clicks that land on the switch, the expand/collapse button, or
+  // the keybinding select, which already handle themselves (the switch's
+  // own onChange would otherwise double-fire alongside this).
   function handleRowClick(event: MouseEvent<HTMLDivElement>) {
     if (ancestorHidden) return;
     const target = event.target as HTMLElement;
-    if (target.closest(".switch") || target.closest(".cn-expand-btn")) return;
+    if (
+      target.closest(".switch") ||
+      target.closest(".cn-expand-btn") ||
+      target.closest(".cn-keybinding-select")
+    ) {
+      return;
+    }
     onToggle(node, !isHidden);
   }
 
@@ -68,10 +92,13 @@ export function NodeRow({ node, depth, ancestorHidden, onToggle }: NodeRowProps)
         </Switch>
         <span
           className={depth === 0 ? "cn-row-label cn-section-label" : "cn-row-label"}
-          title={node.href ?? undefined}
+          title={href ?? undefined}
         >
           {label}
         </span>
+        {href && (
+          <KeyBindingSelect currentBinding={currentBinding} onChange={(binding) => onAssignKeyBinding(href, binding)} />
+        )}
       </div>
       {hasChildren && expanded && (
         <ul className="cn-tree-children" role="group">
@@ -82,6 +109,8 @@ export function NodeRow({ node, depth, ancestorHidden, onToggle }: NodeRowProps)
               depth={depth + 1}
               ancestorHidden={effectivelyHidden}
               onToggle={onToggle}
+              keyBindingMap={keyBindingMap}
+              onAssignKeyBinding={onAssignKeyBinding}
             />
           ))}
         </ul>

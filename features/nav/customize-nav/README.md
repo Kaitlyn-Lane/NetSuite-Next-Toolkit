@@ -6,6 +6,13 @@ nested under it. Changes are read by `features/nav/vertical-hover` at render
 time — they only take effect after the user saves and refreshes the
 NetSuite tab, there's no live-reload wiring here.
 
+This tree is also where a link gets an Alt+0–9 keyboard shortcut — that's
+a separate feature, `features/nav/keybindings`, whose `KeyBindingSelect`
+this feature's `NodeRow` renders per row. See that feature's own README for
+why it's a genuinely separate concern (its own storage key, its own
+immediate-save behavior, no Save-button batching) rather than another field
+alongside `hidden`.
+
 ## Storage design
 
 `NavExtraction` (in `features/nav/types.ts`, shared by every nav
@@ -51,6 +58,10 @@ left out of scope for now, not overlooked.
   ancestor stays hidden (`filterHiddenExtraction` drops the whole subtree
   regardless of a descendant's own flag). A depth-0 row (a top-level layer)
   gets a bold label to stay visually distinct from what's nested under it.
+  Also renders `features/nav/keybindings`' `KeyBindingSelect` for any node
+  with an `href` (there's nothing to bind otherwise), right-aligned; a
+  click landing on it is excluded from the row's own click-to-toggle
+  handler the same way clicks on the switch and the expand button are.
 - `PopupTile.ts` — `mountCustomizeNavTile(container)`, a small vanilla
   (non-React) card in the popup that links to the options page's section.
   The popup is too narrow for the tree itself (arbitrary depth, a switch
@@ -60,9 +71,16 @@ left out of scope for now, not overlooked.
   the id shared with `OptionsSection.tsx` so the two always agree on the
   same string.
 - `OptionsSection.tsx` — `mountCustomizeNavSection(container)`, builds the
-  whole collapsible `<details id="customize-nav" class="collapsible panel">`
+  whole collapsible `<details id="customize-nav" class="collapsible">`
   section (matching the popup's own `.collapsible` pattern) and mounts
-  `CustomizeNavTable` inside it. Collapsed by default;
+  `CustomizeNavTable` inside it — nested inside the options page's Features
+  panel (see `entrypoints/options/main.ts`), not its own top-level section,
+  so no `.panel` class here; it shouldn't draw a second card inside that
+  one. The description lives inside `<summary>` itself (`.cn-section-intro`
+  in `styles.css` undoes the uppercase/bold `.section-label` styling it'd
+  otherwise inherit there), not as a sibling after it, since a native
+  `<details>` hides everything after `<summary>` while collapsed and the
+  description should stay readable either way. Collapsed by default;
   `core/section-params.ts`'s `expandSectionFromUrl()` (called generically
   from `entrypoints/options/main.ts`, not specific to this section) opens
   and focuses it when arriving via the popup tile's URL param. This is the
@@ -101,4 +119,6 @@ nodes/subtrees.
 Mounted from `entrypoints/popup/main.ts` (`mountCustomizeNavTile`, just a
 link out) and `entrypoints/options/main.ts` (`mountCustomizeNavSection`, the
 actual tree) — both entrypoints stay thin, importing only from this
-feature's `index.ts`.
+feature's `index.ts`. In both, it's nested inside the existing "Features"
+section/panel rather than a separate top-level one — it's a detail of the
+Vertical Hover Nav feature, not a feature of its own.

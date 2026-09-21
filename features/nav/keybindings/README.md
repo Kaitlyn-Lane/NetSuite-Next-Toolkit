@@ -1,0 +1,65 @@
+# Nav keybindings: Alt+0–9 jump-to-link
+
+Lets the user bind any nav link (anything with an `href`) to one of ten
+fixed shortcuts — Alt+1 through Alt+9, Alt+0 — from a dropdown in the
+Customize Nav tree. Pressing the shortcut on a NetSuite page navigates
+straight there.
+
+## Why a fixed Alt+0–9 set, not an arbitrary recorded keystroke
+
+Recording an arbitrary key combo isn't the hard part (a "press any key"
+capture field is a well-known pattern) — the real cost is everything that
+comes after: guarding against binding something a browser/OS already
+reserves, and making sure a shortcut doesn't fire while the user is typing
+in a NetSuite form field. A fixed Alt+digit set sidesteps both: it's not
+commonly reserved, and nobody produces "Alt+3" by typing normally, so
+there's no need to check for focus in an input at all.
+
+`event.code` (not `event.key`) is what `listen.ts` matches against —
+`event.key` for Option+digit on macOS produces a different character
+entirely depending on layout (e.g. Option+1 → "¡" in a US layout), while
+`event.code` reports the physical key ("Digit1") regardless of modifiers or
+layout. The listener also rejects the combo if `ctrlKey` is also set, since
+browsers commonly report AltGr (used to type symbols on European layouts)
+as Ctrl+Alt together — without that check, typing certain symbols could
+misfire a shortcut.
+
+## Storage design
+
+`chrome.storage.local["navKeyBindings"]` is its own key, entirely separate
+from `navMenu` — a `Partial<Record<KeyBinding, string>>` mapping each
+binding directly to the href it opens. This is deliberate: both operations
+this feature actually needs — "what does Alt+3 open" (the keydown listener)
+and "does this href already have a binding, and does this binding already
+point somewhere else" (reassigning one from the tree UI) — are then a
+lookup or a scan over a map with at most 10 entries, never a walk over the
+(potentially much larger) nav tree the way hide flags in
+`features/nav/customize-nav` are.
+
+A link holds at most one binding, and a binding points at most one link:
+`setKeyBinding(binding, href)` clears both directions before writing, so
+assigning an already-used binding to a new link silently steals it from
+whichever link had it — there's no "already used by" indicator in the UI,
+since building one would mean looking up the label of whichever other node
+holds a given binding, which (unlike the map operations above) would mean
+walking the tree. Considered out of scope for the same reason a fixed
+key set was: keep the common case cheap and simple.
+
+## Files
+
+- `types.ts` — `KEY_BINDINGS` (the fixed set), `KeyBinding`, `KeyBindingMap`.
+- `storage.ts` — `getKeyBindingMap`/`setKeyBinding`/`clearBindingForHref`
+  over the `navKeyBindings` key.
+- `listen.ts` — `runKeybindingListener()`, registered from
+  `entrypoints/nav.content.ts` behind the `navKeybindings` feature flag
+  (see `core/feature-flags.ts`), the same way `vertical-hover` is.
+- `KeyBindingSelect.tsx` — the per-row `<select>` in the Customize Nav
+  tree (`features/nav/customize-nav/NodeRow.tsx`) for assigning a binding
+  to that node's `href`. Rendered only for nodes that have one — there's
+  nothing to jump to otherwise.
+
+Unlike hide flags (batched behind a Save button, since each save writes the
+whole nav tree), a keybinding change is persisted immediately —
+`navKeyBindings` is tiny, so there's no batching win to be had, and
+matches how feature flags and theme colors already save on change
+elsewhere in this app.

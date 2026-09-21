@@ -27,7 +27,8 @@ export function mountCustomizeNavSection(container: HTMLElement): void {
         Customize Nav
         <span class="cn-section-intro">
           Hide any top-level layer, container, or link from the vertical
-          hover nav. Hiding a container hides everything nested under it.
+          hover nav (hiding a container hides everything nested under it),
+          and bind any link to Alt+1–Alt+9 or Alt+0 to jump straight to it.
         </span>
       </summary>
       <div id="customize-nav-tree"></div>

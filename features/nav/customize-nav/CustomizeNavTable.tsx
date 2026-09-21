@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "react-aria-components";
 
+import { clearBindingForHref, getKeyBindingMap, setKeyBinding } from "@/features/nav/keybindings";
+import type { KeyBinding, KeyBindingMap } from "@/features/nav/keybindings";
 import { getNavMenu, setNavMenu } from "@/features/nav/storage";
 import type { MenuNode, NavExtraction } from "@/features/nav/types";
 
@@ -37,11 +39,13 @@ function SaveRow({
 
 export function CustomizeNavTable() {
   const [navMenu, setNavMenuState] = useState<LoadState>(undefined);
+  const [keyBindingMap, setKeyBindingMapState] = useState<KeyBindingMap>({});
   const [dirty, setDirty] = useState(false);
   const [saveStatus, setSaveStatus] = useState("");
 
   const reload = useCallback(async () => {
     setNavMenuState((await getNavMenu()) ?? null);
+    setKeyBindingMapState(await getKeyBindingMap());
     setDirty(false);
     setSaveStatus("");
   }, []);
@@ -60,6 +64,22 @@ export function CustomizeNavTable() {
     setNavMenuState((prev) => (prev ? [...prev] : prev));
     setDirty(true);
     setSaveStatus("");
+  }, []);
+
+  // Persists immediately, unlike hide flags — navKeyBindings is its own
+  // tiny storage key (at most 10 entries), so there's no whole-tree write
+  // to batch behind a Save button here. Re-reads the map after writing
+  // rather than predicting the result locally, since assigning a binding
+  // can also silently clear it from whichever other link held it (see
+  // features/nav/keybindings/storage.ts's setKeyBinding).
+  const handleAssignKeyBinding = useCallback((href: string, binding: KeyBinding | undefined) => {
+    const persist = binding ? setKeyBinding(binding, href) : clearBindingForHref(href);
+    persist
+      .then(getKeyBindingMap)
+      .then(setKeyBindingMapState)
+      .catch((error: unknown) => {
+        console.error("[NST] customize-nav: failed to save key binding", error);
+      });
   }, []);
 
   const handleSave = useCallback(() => {
@@ -93,7 +113,15 @@ export function CustomizeNavTable() {
       <SaveRow dirty={dirty} status={saveStatus} onSave={handleSave} position="top" />
       <ul className="cn-tree" role="tree">
         {navMenu.map((node, i) => (
-          <NodeRow key={i} node={node} depth={0} ancestorHidden={false} onToggle={handleToggleNode} />
+          <NodeRow
+            key={i}
+            node={node}
+            depth={0}
+            ancestorHidden={false}
+            onToggle={handleToggleNode}
+            keyBindingMap={keyBindingMap}
+            onAssignKeyBinding={handleAssignKeyBinding}
+          />
         ))}
       </ul>
       <SaveRow dirty={dirty} status={saveStatus} onSave={handleSave} position="bottom" />

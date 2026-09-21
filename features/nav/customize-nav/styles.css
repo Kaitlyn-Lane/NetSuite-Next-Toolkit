@@ -148,6 +148,22 @@
   font-size: 13px;
 }
 
+/* features/nav/keybindings' per-row KeyBindingSelect — only rendered for a
+   node that has an href. Right-aligned regardless of label length, so the
+   column stays visually consistent down the tree. */
+.cn-keybinding-select {
+  margin-left: auto;
+  flex-shrink: 0;
+  font: inherit;
+  font-size: 11px;
+  padding: 2px 4px;
+  border: 1px solid var(--nst-border);
+  border-radius: 6px;
+  background: var(--nst-bg);
+  color: var(--nst-text);
+  cursor: pointer;
+}
+
 .cn-section-label {
   font-weight: 600;
   font-size: 13.5px;

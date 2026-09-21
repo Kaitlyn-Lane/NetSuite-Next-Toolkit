@@ -3,6 +3,7 @@ import { NETSUITE_MATCHES } from "@/core/matches";
 import { safeInit } from "@/core/safe-init";
 import { buildNavMenu } from "@/features/nav/build-menu";
 import { isBuildNavMenuRequest, type BuildNavMenuResponse } from "@/features/nav/build-menu/types/messages";
+import { runKeybindingListener } from "@/features/nav/keybindings";
 import { runNavVerticalHover } from "@/features/nav/vertical-hover";
 
 // Every nav feature shares NETSUITE_MATCHES, so they're registered from one
@@ -22,6 +23,10 @@ export default defineContentScript({
   async main() {
     if (await isFeatureEnabled("verticalHoverNav")) {
       safeInit("nav-vertical-hover", runNavVerticalHover);
+    }
+
+    if (await isFeatureEnabled("navKeybindings")) {
+      safeInit("nav-keybindings", runKeybindingListener);
     }
 
     chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
