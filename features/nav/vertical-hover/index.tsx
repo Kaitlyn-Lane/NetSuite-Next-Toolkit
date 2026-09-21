@@ -4,6 +4,8 @@ import { NAV_MENU_BUTTON_SELECTOR } from "@/core/selectors";
 import { waitForElement } from "@/core/utils";
 import type { NavExtraction } from "@/features/nav/build-menu/extractor";
 import { filterHiddenExtraction } from "@/features/nav/customize-nav/filterHidden";
+import { applyThemeColors } from "@/features/theme/apply-theme-colors";
+import { DEFAULT_THEME_COLORS, THEME_COLORS_STORAGE_KEY, type ThemeColors } from "@/features/theme/types";
 
 import { RootMenu } from "./RootMenu";
 import "./styles.css";
@@ -33,8 +35,12 @@ function suppressNativeTooltip(button: HTMLElement): void {
 }
 
 export async function runNavVerticalHover(): Promise<void> {
-  const stored = await chrome.storage.local.get(NAV_MENU_STORAGE_KEY);
+  const stored = await chrome.storage.local.get([NAV_MENU_STORAGE_KEY, THEME_COLORS_STORAGE_KEY]);
   const navMenu = stored[NAV_MENU_STORAGE_KEY] as NavExtraction | undefined;
+  const themeColors: ThemeColors = {
+    ...DEFAULT_THEME_COLORS,
+    ...(stored[THEME_COLORS_STORAGE_KEY] as Partial<ThemeColors> | undefined),
+  };
 
   if (!navMenu) {
     console.warn(
@@ -50,6 +56,7 @@ export async function runNavVerticalHover(): Promise<void> {
   const groups = filterHiddenExtraction(navMenu).filter(
     (node) => node.type !== "container" || node.children.length > 0,
   );
+  applyThemeColors(themeColors);
 
   const button = (await waitForElement(NAV_MENU_BUTTON_SELECTOR, { timeout: 10000 })) as HTMLElement;
   suppressNativeTooltip(button);

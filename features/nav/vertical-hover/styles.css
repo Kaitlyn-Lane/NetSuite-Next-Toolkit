@@ -5,8 +5,9 @@
    library's own defaults, not ours. */
 
 .react-aria-Popover {
-  background: #000;
-  color: #fff;
+  background: var(--nst-flyout-bg, #000);
+  color: var(--nst-flyout-text, #fff);
+  border: 1px solid var(--nst-flyout-accent, #333);
   min-width: 140px;
   z-index: 2147483647;
 }
@@ -21,7 +22,7 @@
 .react-aria-MenuItem {
   display: block;
   padding: 6px 16px;
-  color: #fff;
+  color: var(--nst-flyout-text, #fff);
   text-decoration: none;
   cursor: pointer;
   white-space: nowrap;
@@ -41,16 +42,24 @@ a.react-aria-MenuItem {
   text-decoration: none;
 }
 
+/* Mixed with the background rather than used at full strength, so a dark
+   accent on a light background doesn't wash out dark/black text — and so
+   this still works sensibly for the opposite (light accent, dark
+   background) case, since it interpolates toward whichever bg is set
+   instead of assuming black or white. */
 .react-aria-MenuItem[data-focused],
 .react-aria-MenuItem[data-hovered] {
-  background: #333;
+  background: color-mix(in srgb, var(--nst-flyout-accent, #333) 50%, var(--nst-flyout-bg, #000));
 }
 
 /* Path highlight: keep a trigger visually active while its own submenu
    is open, even after the mouse has moved on to a deeper layer and this
-   item is no longer directly hovered. */
+   item is no longer directly hovered. Intentionally the same background
+   as the hover state above (kept as its own rule in case they need to
+   diverge again) — a stronger accent mix here read fine on a dark
+   background, but got too dark for black text on a light background. */
 .react-aria-MenuItem[data-open] {
-  background: #222;
+  background: color-mix(in srgb, var(--nst-flyout-accent, #222) 50%, var(--nst-flyout-bg, #000));
 }
 
 /* Force white text regardless of link state — NetSuite's own page CSS
@@ -60,7 +69,7 @@ a.react-aria-MenuItem:link,
 a.react-aria-MenuItem:visited,
 a.react-aria-MenuItem:hover,
 a.react-aria-MenuItem:active {
-  color: #fff !important;
+  color: var(--nst-flyout-text, #fff) !important;
 }
 
 /* NetSuite's own JET tooltip on the nav button renders via a shared popup
