@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Button, Menu, MenuTrigger, Popover } from "react-aria-components";
 
-import type { MenuContainerNode } from "@/features/nav/build-menu/extractor";
+import type { MenuNode } from "@/features/nav/types";
 
 import { MenuItem } from "./MenuItem";
 
@@ -11,7 +11,7 @@ import { MenuItem } from "./MenuItem";
 // visual anchor is `button` via Popover's triggerRef. Verified in the
 // mockup harness that MenuTrigger's nested-submenu coordination still
 // works with this split (see ../README.md).
-export function RootMenu({ button, groups }: { button: HTMLElement; groups: MenuContainerNode[] }) {
+export function RootMenu({ button, groups }: { button: HTMLElement; groups: MenuNode[] }) {
   const [isOpen, setIsOpen] = useState(false);
   const triggerRef = useRef<HTMLElement>(button);
 

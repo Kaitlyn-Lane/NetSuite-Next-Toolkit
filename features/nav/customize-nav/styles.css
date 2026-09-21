@@ -1,0 +1,211 @@
+/* Styling for everything customize-nav renders: the popup's link-out tile
+   (PopupTile.ts) and the options page's collapsible section + tree
+   (OptionsSection.tsx, CustomizeNavTable.tsx). Shared primitives —
+   --nst-* variables, .btn, .switch/.switch-track, .panel, .collapsible —
+   come from core/theme.css and entrypoints/options/style.css, already
+   loaded by whichever page mounts this feature; this file only covers
+   what's specific to customize-nav's own markup. */
+
+/* Popup tile (PopupTile.ts) — a clickable card linking to the options
+   page's Customize Nav section, styled like the popup's other card-based
+   sections (.feature-list, .theme-colors). */
+.nav-tile {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  background: var(--nst-surface);
+  border: 1px solid var(--nst-border);
+  border-radius: 10px;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  transition:
+    border-color 120ms ease,
+    background-color 120ms ease;
+}
+
+.nav-tile:hover {
+  border-color: var(--nst-accent);
+}
+
+.nav-tile-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.nav-tile-title {
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.nav-tile-desc {
+  font-size: 11px;
+  line-height: 1.35;
+  color: var(--nst-text-muted);
+}
+
+.nav-tile-chevron {
+  font-size: 16px;
+  color: var(--nst-text-muted);
+  flex-shrink: 0;
+}
+
+/* Options page section (OptionsSection.tsx) — boxed the same as a
+   .feature-card (Vertical Hover Nav's own row in the list above) so the
+   two read as the same kind of thing, just sitting below the toggle list
+   rather than inside it. */
+.cn-nested-section {
+  background: var(--nst-surface);
+  border: 1px solid var(--nst-border);
+  border-radius: 10px;
+  padding: 12px 14px;
+}
+
+/* The description lives inside <summary> (see that file for why), so it
+   needs to escape the uppercase/bold/small styling .section-label puts
+   on the summary itself and read as an ordinary paragraph on its own
+   line underneath the title. */
+.cn-section-intro {
+  display: block;
+  margin-top: 4px;
+  font-size: 13px;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: normal;
+  color: var(--nst-text-muted);
+}
+
+.cn-status-message {
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: var(--nst-text-muted);
+  min-height: 1.1em;
+}
+
+.cn-filter-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.cn-filter-label {
+  font-size: 12px;
+  color: var(--nst-text-muted);
+}
+
+.cn-tree,
+.cn-tree-children {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.cn-tree-children {
+  margin-top: 2px;
+}
+
+.cn-row-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  min-width: 0;
+  cursor: pointer;
+  transition: background-color 120ms ease;
+}
+
+.cn-row-content:hover {
+  background: var(--nst-surface);
+}
+
+.cn-row-dimmed {
+  opacity: 0.5;
+}
+
+/* Only set when an ancestor is hidden (not merely when this row itself is)
+   — clicking such a row to toggle its own flag would have no visible
+   effect while the ancestor stays hidden, same reasoning as the switch's
+   own isDisabled. A self-hidden-but-not-ancestor-locked row stays
+   clickable, since clicking it is exactly how you'd turn it back on. */
+.cn-row-locked {
+  cursor: not-allowed;
+}
+
+.cn-expand-btn {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: var(--nst-text-muted);
+  font-size: 15px;
+  line-height: 1;
+  transition: transform 150ms ease;
+}
+
+.cn-expand-btn.expanded {
+  transform: rotate(90deg);
+}
+
+.cn-expand-spacer {
+  display: inline-block;
+  width: 18px;
+  flex-shrink: 0;
+}
+
+.cn-row-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+  font-size: 13px;
+}
+
+/* features/nav/keybindings' per-row KeyBindingSelect — only rendered for a
+   node that has an href. Right-aligned regardless of label length, so the
+   column stays visually consistent down the tree. */
+.cn-keybinding-select {
+  margin-left: auto;
+  flex-shrink: 0;
+  font: inherit;
+  font-size: 11px;
+  padding: 2px 4px;
+  border: 1px solid var(--nst-border);
+  border-radius: 6px;
+  background: var(--nst-bg);
+  color: var(--nst-text);
+  cursor: pointer;
+}
+
+.cn-section-label {
+  font-weight: 600;
+  font-size: 13.5px;
+}
+
+.cn-save-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.cn-save-row-top {
+  margin-bottom: 16px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--nst-border);
+}
+
+.cn-save-row-bottom {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--nst-border);
+}
