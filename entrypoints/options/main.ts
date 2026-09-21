@@ -1,6 +1,7 @@
 import "@/core/theme.css";
 import "./style.css";
 import { FEATURE_FLAGS, getFeatureFlagState, setFeatureEnabled } from "@/core/feature-flags";
+import { mountThemeColorPicker } from "@/features/theme/popup-color-picker";
 
 document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
   <div class="page">
@@ -42,8 +43,10 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
       <h2 class="section-label">Appearance</h2>
       <p class="panel-intro">
         Customize the colors used by the vertical hover nav (text,
-        background, and the hover/active accent) from the popup.
+        background, and the hover/active accent) — also available from the
+        popup.
       </p>
+      <div id="theme-colors" class="theme-colors"></div>
       <div class="callout">
         Color changes only apply to NetSuite tabs opened or refreshed after
         you change them — same as feature toggles above.
@@ -81,3 +84,4 @@ async function renderFeatureList(): Promise<void> {
 }
 
 void renderFeatureList();
+void mountThemeColorPicker(document.querySelector<HTMLDivElement>("#theme-colors")!);

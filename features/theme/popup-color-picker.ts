@@ -14,6 +14,7 @@ const FIELDS: ColorField[] = [
 ];
 
 const HEX_PATTERN = /^#[0-9a-fA-F]{6}$/;
+const DEFAULT_FIELD_KEY: keyof ThemeColors = "text";
 
 // One shared iro.js instance reused across all three fields, rather than
 // three mounted canvases, to keep the popup's DOM footprint small.
@@ -27,7 +28,7 @@ export async function mountThemeColorPicker(container: HTMLElement): Promise<voi
   container.innerHTML = `
     ${FIELDS.map(
       (field) => `
-        <div class="color-row">
+        <div class="color-row" id="row-${field.key}">
           <span class="flag-name">${field.label}</span>
           <input
             type="text"
@@ -53,13 +54,27 @@ export async function mountThemeColorPicker(container: HTMLElement): Promise<voi
       <div class="preview-item">Normal</div>
       <div class="preview-item preview-hover">Hover / Active</div>
     </div>
+    <button type="button" class="btn btn-link theme-restore" id="restore-defaults">Restore defaults</button>
   `;
 
   const wheelPanel = container.querySelector<HTMLDivElement>("#wheel-panel")!;
   const preview = container.querySelector<HTMLDivElement>("#theme-preview")!;
-  const colorPicker = iro.ColorPicker(wheelPanel, { width: 140, color: colors.accent });
+  const restoreButton = container.querySelector<HTMLButtonElement>("#restore-defaults")!;
+  const colorPicker = iro.ColorPicker(wheelPanel, { width: 140, color: colors[DEFAULT_FIELD_KEY] });
 
-  let activeKey: keyof ThemeColors | null = null;
+  // Always one field "selected" (never null) so it's always clear which
+  // color the wheel/hex inputs would affect — the selected row is
+  // highlighted via the "active" class regardless of whether the wheel
+  // panel itself is currently expanded.
+  let activeKey: keyof ThemeColors = DEFAULT_FIELD_KEY;
+
+  function setActiveField(key: keyof ThemeColors): void {
+    activeKey = key;
+    for (const field of FIELDS) {
+      container.querySelector<HTMLDivElement>(`#row-${field.key}`)!.classList.toggle("active", field.key === key);
+    }
+    colorPicker.color.hexString = colors[key];
+  }
 
   function updatePreview(): void {
     preview.style.setProperty("--nst-flyout-text", colors.text);
@@ -78,9 +93,20 @@ export async function mountThemeColorPicker(container: HTMLElement): Promise<voi
   }
 
   updatePreview();
+  setActiveField(activeKey);
+
+  restoreButton.addEventListener("click", () => {
+    for (const field of FIELDS) {
+      colors[field.key] = DEFAULT_THEME_COLORS[field.key];
+      container.querySelector<HTMLButtonElement>(`#swatch-${field.key}`)!.style.background = colors[field.key];
+      container.querySelector<HTMLInputElement>(`#hex-${field.key}`)!.value = colors[field.key];
+    }
+    updatePreview();
+    colorPicker.color.hexString = colors[activeKey];
+    void chrome.storage.local.set({ [THEME_COLORS_STORAGE_KEY]: colors });
+  });
 
   colorPicker.on("color:change", (color: { hexString: string }) => {
-    if (!activeKey) return;
     container.querySelector<HTMLButtonElement>(`#swatch-${activeKey}`)!.style.background = color.hexString;
     container.querySelector<HTMLInputElement>(`#hex-${activeKey}`)!.value = color.hexString;
   });
@@ -88,23 +114,38 @@ export async function mountThemeColorPicker(container: HTMLElement): Promise<voi
   // Fires once per drag gesture (mouseup/touchend), so this is the point
   // to persist — no separate debounce needed for the drag itself.
   colorPicker.on("input:end", (color: { hexString: string }) => {
-    if (!activeKey) return;
     commitColor(activeKey, color.hexString);
   });
 
   for (const field of FIELDS) {
+    const row = container.querySelector<HTMLDivElement>(`#row-${field.key}`)!;
     const swatch = container.querySelector<HTMLButtonElement>(`#swatch-${field.key}`)!;
     const hexInput = container.querySelector<HTMLInputElement>(`#hex-${field.key}`)!;
 
+    // Selecting (highlighting) is separate from opening the wheel — any
+    // click in the row selects it, including bubbled clicks from the
+    // swatch/hex-input below, which is harmless since setActiveField is a
+    // no-op when the field is already active.
+    row.addEventListener("click", () => {
+      setActiveField(field.key);
+    });
+
     swatch.addEventListener("click", () => {
-      if (activeKey === field.key && !wheelPanel.hidden) {
-        wheelPanel.hidden = true;
-        activeKey = null;
+      if (activeKey === field.key) {
+        wheelPanel.hidden = !wheelPanel.hidden;
         return;
       }
-      activeKey = field.key;
-      colorPicker.color.hexString = colors[field.key];
+      setActiveField(field.key);
       wheelPanel.hidden = false;
+    });
+
+    // Typing in a field's hex box also selects it, so the wheel (and the
+    // row highlight) stay in sync with whichever field the user is
+    // actually editing, not just whichever swatch was last clicked.
+    hexInput.addEventListener("focus", () => {
+      if (activeKey !== field.key) {
+        setActiveField(field.key);
+      }
     });
 
     function commitHexInput(): void {

@@ -143,3 +143,101 @@ body {
   border-radius: 6px;
   padding: 8px 12px;
 }
+
+/* Theme color picker (features/theme/popup-color-picker.ts) — shared by
+   the popup and options page, so it lives here rather than duplicated in
+   each entrypoint's own stylesheet. */
+.theme-colors {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: var(--nst-surface);
+  border: 1px solid var(--nst-border);
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+
+/* Grid, not flex — a flex row with justify-content: space-between
+   positions the middle (hex-input) column based on how much space the
+   label eats, so it lands at a different x-offset on every row once
+   labels differ in length ("Text" vs "Background"). Fixed grid tracks
+   keep the hex-input/swatch columns aligned across rows regardless of
+   label width. */
+.color-row {
+  display: grid;
+  grid-template-columns: 1fr 68px 22px;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 6px;
+  margin: -4px -6px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition:
+    background-color 120ms ease,
+    box-shadow 120ms ease;
+}
+
+/* One field is always "active" (see popup-color-picker.ts) so it's
+   always obvious which color the wheel/hex inputs below are editing. */
+.color-row.active {
+  background: var(--nst-bg);
+  box-shadow: 0 0 0 1px var(--nst-accent);
+}
+
+.hex-input {
+  width: 68px;
+  padding: 3px 6px;
+  font: inherit;
+  font-size: 11px;
+  border: 1px solid var(--nst-border);
+  border-radius: 6px;
+  background: var(--nst-bg);
+  color: var(--nst-text);
+  text-align: center;
+}
+
+.hex-input:focus-visible {
+  outline: 2px solid var(--nst-accent);
+  outline-offset: 1px;
+}
+
+.swatch {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid var(--nst-border);
+  border-radius: 50%;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.wheel-panel {
+  display: flex;
+  justify-content: center;
+  padding-top: 4px;
+}
+
+.theme-preview {
+  display: flex;
+  flex-direction: column;
+  margin-top: 10px;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.preview-item {
+  padding: 6px 12px;
+  font-size: 12px;
+  background: var(--nst-flyout-bg);
+  color: var(--nst-flyout-text);
+  border: 1px solid var(--nst-flyout-accent);
+}
+
+.preview-item.preview-hover {
+  background: color-mix(in srgb, var(--nst-flyout-accent) 50%, var(--nst-flyout-bg));
+}
+
+.theme-restore {
+  align-self: flex-start;
+  padding: 6px 0;
+}
