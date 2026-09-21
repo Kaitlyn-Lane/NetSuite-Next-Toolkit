@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type MouseEvent } from "react";
 import { Switch } from "react-aria-components";
 
 import type { MenuNode } from "@/features/nav/types";
@@ -23,12 +23,28 @@ export function NodeRow({ node, depth, ancestorHidden, onToggle }: NodeRowProps)
   const [expanded, setExpanded] = useState(true);
   const label = node.label ?? "(untitled)";
 
+  // Lets a click anywhere on the row toggle it, not just the switch itself
+  // — except clicks that land on the switch or the expand/collapse button,
+  // which already handle themselves (the switch's own onChange would
+  // otherwise double-fire alongside this).
+  function handleRowClick(event: MouseEvent<HTMLDivElement>) {
+    if (ancestorHidden) return;
+    const target = event.target as HTMLElement;
+    if (target.closest(".switch") || target.closest(".cn-expand-btn")) return;
+    onToggle(node, !isHidden);
+  }
+
+  const rowContentClassName = [
+    "cn-row-content",
+    effectivelyHidden && "cn-row-dimmed",
+    ancestorHidden && "cn-row-locked",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
   return (
     <li className="cn-row" role="treeitem" aria-expanded={hasChildren ? expanded : undefined}>
-      <div
-        className={effectivelyHidden ? "cn-row-content cn-row-dimmed" : "cn-row-content"}
-        style={{ paddingLeft: depth * 20 }}
-      >
+      <div className={rowContentClassName} style={{ paddingLeft: depth * 20 }} onClick={handleRowClick}>
         {hasChildren ? (
           <button
             type="button"

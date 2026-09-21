@@ -10,6 +10,31 @@ import "./styles.css";
 // `undefined` = still loading, `null` = loaded but nothing scraped yet.
 type LoadState = NavExtraction | null | undefined;
 
+// Rendered both above and below the tree — a long tree shouldn't force a
+// scroll back to the bottom (or top) just to find the Save button.
+function SaveRow({
+  dirty,
+  status,
+  onSave,
+  position,
+}: {
+  dirty: boolean;
+  status: string;
+  onSave: () => void;
+  position: "top" | "bottom";
+}) {
+  return (
+    <div className={`cn-save-row cn-save-row-${position}`}>
+      <Button type="button" className="btn btn-primary" isDisabled={!dirty} onPress={onSave}>
+        Save
+      </Button>
+      <p className="cn-status-message">
+        {status || "Save, then refresh the NetSuite tab to apply changes."}
+      </p>
+    </div>
+  );
+}
+
 export function CustomizeNavTable() {
   const [navMenu, setNavMenuState] = useState<LoadState>(undefined);
   const [dirty, setDirty] = useState(false);
@@ -65,19 +90,13 @@ export function CustomizeNavTable() {
 
   return (
     <div className="cn-customize-nav">
+      <SaveRow dirty={dirty} status={saveStatus} onSave={handleSave} position="top" />
       <ul className="cn-tree" role="tree">
         {navMenu.map((node, i) => (
           <NodeRow key={i} node={node} depth={0} ancestorHidden={false} onToggle={handleToggleNode} />
         ))}
       </ul>
-      <div className="cn-save-row">
-        <Button type="button" className="btn btn-primary" isDisabled={!dirty} onPress={handleSave}>
-          Save
-        </Button>
-        <p className="cn-status-message">
-          {saveStatus || "Save, then refresh the NetSuite tab to apply changes."}
-        </p>
-      </div>
+      <SaveRow dirty={dirty} status={saveStatus} onSave={handleSave} position="bottom" />
     </div>
   );
 }
