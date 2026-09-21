@@ -20,7 +20,10 @@ export function MenuItem({ node }: { node: MenuNode }) {
   return (
     <SubmenuTrigger>
       <AriaMenuItem href={node.href ?? undefined}>{node.label ?? "(untitled)"}</AriaMenuItem>
-      <Popover>
+      {/* Default offset (~8px) left a visible gap between nested layers —
+          tightened here. Not visually verified against a live NetSuite
+          page in this environment; adjust if it looks off. */}
+      <Popover offset={2}>
         <Menu>
           {children.map((child, i) => (
             <MenuItem key={i} node={child} />
