@@ -16,22 +16,35 @@ function digitFromCode(code: string): string | undefined {
 export async function runKeybindingListener(): Promise<void> {
   const bindings = await getKeyBindingMap();
 
-  document.addEventListener("keydown", (event) => {
-    if (!event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) {
-      return;
-    }
+  // Capture phase, on window — the earliest possible point in the event's
+  // path. NetSuite's `oj-c-*` elements are Oracle JET web components, which
+  // commonly manage their own keyboard interaction and can call
+  // stopPropagation() on a keydown before it would otherwise reach a
+  // normal bubble-phase listener on document. Listening this early means
+  // we see the event regardless of what anything downstream later does
+  // with it — and since we only ever call preventDefault() (never
+  // stopPropagation()) when we actually match a bound key, every other
+  // keystroke still reaches the page exactly as before.
+  window.addEventListener(
+    "keydown",
+    (event) => {
+      if (!event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) {
+        return;
+      }
 
-    const digit = digitFromCode(event.code);
-    if (!digit) {
-      return;
-    }
+      const digit = digitFromCode(event.code);
+      if (!digit) {
+        return;
+      }
 
-    const href = bindings[`alt+${digit}` as KeyBinding];
-    if (!href) {
-      return;
-    }
+      const href = bindings[`alt+${digit}` as KeyBinding];
+      if (!href) {
+        return;
+      }
 
-    event.preventDefault();
-    window.location.href = href;
-  });
+      event.preventDefault();
+      window.location.href = href;
+    },
+    true,
+  );
 }

@@ -24,6 +24,20 @@ browsers commonly report AltGr (used to type symbols on European layouts)
 as Ctrl+Alt together — without that check, typing certain symbols could
 misfire a shortcut.
 
+The listener is registered on `window`, in the capture phase (the third
+`addEventListener` argument), not the default bubble phase on `document`.
+NetSuite's `oj-c-*` elements (see `features/nav/build-menu/extractor.ts`'s
+selectors) are Oracle JET web components, which commonly manage their own
+keyboard interaction internally and can call `stopPropagation()` on a
+keydown before it would otherwise reach a normal bubble-phase listener —
+the leading suspect for an early report of shortcuts silently doing
+nothing (binding saved correctly, keypress reached nothing, no error).
+Capture phase on `window` is the earliest point in the event's path, so we
+see it regardless of what anything downstream does with it afterward. This
+is safe for every other keystroke either way: we only ever call
+`preventDefault()` (never `stopPropagation()`), and only once we've
+actually matched a bound key, so nothing we don't care about is affected.
+
 ## Storage design
 
 `chrome.storage.local["navKeyBindings"]` is its own key, entirely separate
