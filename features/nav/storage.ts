@@ -1,9 +1,9 @@
-import type { NavExtraction } from "@/features/nav/build-menu/extractor";
+import type { NavExtraction } from "./types";
 
-// Same key features/nav/build-menu and features/nav/vertical-hover already
-// read/write — hide flags live directly on this tree (see extractor.ts's
-// `MenuNode.hidden` field) rather than in a second storage key, so there's
-// nothing to reconcile between two independent stores.
+// The one place that knows the storage key — build-menu writes here,
+// vertical-hover and customize-nav both read (and customize-nav also
+// writes, to persist hide flags), all through this module rather than each
+// duplicating the key/raw chrome.storage.local calls.
 export const NAV_MENU_STORAGE_KEY = "navMenu";
 
 export async function getNavMenu(): Promise<NavExtraction | undefined> {

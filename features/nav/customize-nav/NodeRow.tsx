@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Switch } from "react-aria-components";
 
-import type { MenuNode } from "@/features/nav/build-menu/extractor";
+import type { MenuNode } from "@/features/nav/types";
 
 interface NodeRowProps {
   node: MenuNode;

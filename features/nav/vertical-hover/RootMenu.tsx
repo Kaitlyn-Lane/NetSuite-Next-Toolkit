@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Button, Menu, MenuTrigger, Popover } from "react-aria-components";
 
-import type { MenuNode } from "@/features/nav/build-menu/extractor";
+import type { MenuNode } from "@/features/nav/types";
 
 import { MenuItem } from "./MenuItem";
 

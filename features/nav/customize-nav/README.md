@@ -8,16 +8,17 @@ NetSuite tab, there's no live-reload wiring here.
 
 ## Storage design
 
-`NavExtraction` (in `features/nav/build-menu/extractor.ts`) is just
-`MenuNode[]` — the three top-level layers (Shortcuts, Menu, Create) are the
-first three entries of that array, real `MenuContainerNode`s built by
+`NavExtraction` (in `features/nav/types.ts`, shared by every nav
+sub-feature — see that file, not owned by this one) is just `MenuNode[]` —
+the three top-level layers (Shortcuts, Menu, Create) are the first three
+entries of that array, real `MenuContainerNode`s built by `build-menu`'s
 `extractNav()`, not a separate named shape. That means hiding a top-level
 layer uses the exact same `MenuNode.hidden` field as hiding anything else
 in the tree — no parallel per-section flag, no second storage key, nothing
 to reconcile. Toggling a node just flips its own `hidden` field and, on
-Save, writes the whole tree back under the single
-`chrome.storage.local["navMenu"]` key that `build-menu`/`vertical-hover`
-already use.
+Save, writes the whole tree back via `features/nav/storage.ts`'s
+`setNavMenu`, under the single `chrome.storage.local["navMenu"]` key that
+`build-menu` and `vertical-hover` also read/write through that same module.
 
 **Known, accepted limitation**: re-running "Create Menu Nav" overwrites
 `navMenu` wholesale with a fresh scrape, which has no `hidden` flags set —
@@ -31,7 +32,8 @@ left out of scope for now, not overlooked.
 - `filterHidden.ts` — `filterHiddenExtraction(nodes)`, applies the embedded
   `hidden` flags to a scraped tree, dropping hidden nodes and everything
   nested under a hidden container. Used by `vertical-hover`, not by this UI.
-- `storage.ts` — `getNavMenu`/`setNavMenu` over the shared `navMenu` key.
+  (`getNavMenu`/`setNavMenu` themselves live in `features/nav/storage.ts`,
+  not here — this feature just calls them.)
 - `CustomizeNavTable.tsx` — top-level component. Loads `navMenu` on mount
   and renders one `NodeRow` per top-level entry — no special-casing for
   which three entries are "sections," they're rendered in whatever order

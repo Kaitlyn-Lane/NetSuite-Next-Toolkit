@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "react-aria-components";
 
-import type { MenuNode, NavExtraction } from "@/features/nav/build-menu/extractor";
+import { getNavMenu, setNavMenu } from "@/features/nav/storage";
+import type { MenuNode, NavExtraction } from "@/features/nav/types";
 
 import { NodeRow } from "./NodeRow";
-import { getNavMenu, setNavMenu } from "./storage";
 import "./styles.css";
 
 // `undefined` = still loading, `null` = loaded but nothing scraped yet.
