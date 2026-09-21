@@ -25,18 +25,29 @@ as Ctrl+Alt together — without that check, typing certain symbols could
 misfire a shortcut.
 
 The listener is registered on `window`, in the capture phase (the third
-`addEventListener` argument), not the default bubble phase on `document`.
-NetSuite's `oj-c-*` elements (see `features/nav/build-menu/extractor.ts`'s
-selectors) are Oracle JET web components, which commonly manage their own
-keyboard interaction internally and can call `stopPropagation()` on a
-keydown before it would otherwise reach a normal bubble-phase listener —
-the leading suspect for an early report of shortcuts silently doing
-nothing (binding saved correctly, keypress reached nothing, no error).
-Capture phase on `window` is the earliest point in the event's path, so we
-see it regardless of what anything downstream does with it afterward. This
-is safe for every other keystroke either way: we only ever call
-`preventDefault()` (never `stopPropagation()`), and only once we've
-actually matched a bound key, so nothing we don't care about is affected.
+`addEventListener` argument), not the default bubble phase on `document` —
+a defensive measure against NetSuite's `oj-c-*` Oracle JET web components
+(see `features/nav/build-menu/extractor.ts`'s selectors), which commonly
+manage their own keyboard interaction and could call `stopPropagation()`
+on a keydown before it reached a bubble-phase listener. This turned out
+not to be the actual cause of an early "shortcuts do nothing" report (see
+below), but it's harmless to keep: we only ever call `preventDefault()`
+(never `stopPropagation()`), and only once we've actually matched a bound
+key, so no other keystroke is affected either way.
+
+**The actual cause, confirmed**: NetSuite Next's main content area renders
+inside an iframe (shortcuts fired fine from the top-frame header, never
+from within the content area). A content script only runs in the top frame
+by default — `entrypoints/nav-keybindings.content.ts` sets `allFrames:
+true` specifically so this listener also runs inside that iframe (any
+frame whose own URL matches `NETSUITE_MATCHES`, actually — same-origin
+nested frames included). This is a genuinely different requirement from
+`vertical-hover`/`build-menu`, which only ever need the top frame (the nav
+button and nav panel both live there) and are deliberately kept in
+`entrypoints/nav.content.ts` without `allFrames` — see that file's comment
+for why turning it on there too would cause a different, real problem
+(build-menu's message listener racing a same-tab `sendMessage` reply
+across frames).
 
 ## Storage design
 
@@ -64,12 +75,15 @@ key set was: keep the common case cheap and simple.
 - `types.ts` — `KEY_BINDINGS` (the fixed set), `KeyBinding`, `KeyBindingMap`.
 - `storage.ts` — `getKeyBindingMap`/`setKeyBinding`/`clearBindingForHref`
   over the `navKeyBindings` key.
-- `listen.ts` — `runKeybindingListener()`, registered unconditionally from
-  `entrypoints/nav.content.ts` (`safeInit("nav-keybindings", ...)`, no
-  `isFeatureEnabled(...)` check) — this is a detail of navigation
-  customization, not a feature a user would toggle on its own, so unlike
-  `vertical-hover` it has no entry in `core/feature-flags.ts` at all. It
-  still lives in its own folder for organization, same as any other nav
+- `listen.ts` — `runKeybindingListener()`, registered unconditionally
+  (`safeInit("nav-keybindings", ...)`, no `isFeatureEnabled(...)` check —
+  this is a detail of navigation customization, not a feature a user would
+  toggle on its own, so unlike `vertical-hover` it has no entry in
+  `core/feature-flags.ts` at all) from its own content-script entrypoint,
+  `entrypoints/nav-keybindings.content.ts` — not `entrypoints/nav.content.ts`,
+  where every other nav feature lives, because this one needs `allFrames:
+  true` and the others specifically must not have it (see that entrypoint's
+  comment). Still just a folder for organization, same as any other nav
   sub-feature.
 - `KeyBindingSelect.tsx` — the per-row `<select>` in the Customize Nav
   tree (`features/nav/customize-nav/NodeRow.tsx`) for assigning a binding
