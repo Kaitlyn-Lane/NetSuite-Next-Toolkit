@@ -70,25 +70,6 @@ body {
   text-align: center;
 }
 
-.collapsible summary {
-  cursor: pointer;
-  list-style: none;
-}
-
-.collapsible summary::-webkit-details-marker {
-  display: none;
-}
-
-.collapsible summary::after {
-  content: "›";
-  float: right;
-  transition: transform 150ms ease;
-}
-
-.collapsible[open] summary::after {
-  transform: rotate(90deg);
-}
-
 .popup-footer {
   padding-top: 10px;
   border-top: 1px solid var(--nst-border);

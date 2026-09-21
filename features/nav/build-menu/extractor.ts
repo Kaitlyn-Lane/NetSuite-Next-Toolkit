@@ -2,28 +2,7 @@
 // DevTools console on a real NetSuite page with the nav bar visible. The
 // selectors and extraction logic here must stay the same
 
-export interface MenuContainerNode {
-  type: "container";
-  label: string | undefined;
-  automationType: string | null;
-  href: string | null;
-  children: MenuNode[];
-}
-
-export interface MenuLeafNode {
-  type: "leaf";
-  label: string | undefined;
-  automationType: string | null;
-  href: string | null;
-}
-
-export type MenuNode = MenuContainerNode | MenuLeafNode;
-
-export interface NavExtraction {
-  menu: MenuNode[];
-  shortcuts: MenuNode[];
-  create: MenuNode[];
-}
+import type { MenuContainerNode, MenuLeafNode, MenuNode, NavExtraction } from "@/features/nav/types";
 
 function extractShortcutAndCreateSections(): MenuContainerNode[] {
   const sections = document.querySelectorAll(
@@ -119,7 +98,28 @@ export function extractMenu(): MenuNode[] {
   return Array.from(menus).map(extractMenuNode);
 }
 
+// `sections` is 0 or more containers already labeled `label` (see
+// splitShortcutsAndCreate) wrapping the section's real links — unwrap so
+// this doesn't end up double-nested under a second container with the same
+// label.
+function buildTopLevelSection(label: string, sections: MenuNode[]): MenuContainerNode {
+  return {
+    type: 'container',
+    label,
+    automationType: null,
+    href: null,
+    children: sections.flatMap((section) => (section.type === 'container' ? section.children : [section])),
+  };
+}
+
+// Order here is the visual stacking order vertical-hover renders these in
+// (top of stack first, closest to the nav button last) — Shortcuts, Menu,
+// Create.
 export function extractNav(): NavExtraction {
   const { shortcuts, create } = splitShortcutsAndCreate(extractShortcutAndCreateSections());
-  return { menu: extractMenu(), shortcuts, create };
+  return [
+    buildTopLevelSection('Shortcuts', shortcuts),
+    { type: 'container', label: 'Menu', automationType: null, href: null, children: extractMenu() },
+    buildTopLevelSection('Create', create),
+  ];
 }

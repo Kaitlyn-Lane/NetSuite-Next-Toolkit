@@ -1,6 +1,6 @@
 import { Menu, MenuItem as AriaMenuItem, Popover, SubmenuTrigger } from "react-aria-components";
 
-import type { MenuNode } from "@/features/nav/build-menu/extractor";
+import type { MenuNode } from "@/features/nav/types";
 
 // Recursive: one item per node, rendering its own Popover<Menu> (and,
 // inside that, more MenuItems) if it has children. react-aria-components'

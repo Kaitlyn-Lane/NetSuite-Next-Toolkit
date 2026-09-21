@@ -1,6 +1,8 @@
 import "@/core/theme.css";
 import "./style.css";
 import { FEATURE_FLAGS, getFeatureFlagState, setFeatureEnabled } from "@/core/feature-flags";
+import { expandSectionFromUrl } from "@/core/section-params";
+import { mountCustomizeNavSection } from "@/features/nav/customize-nav";
 import { mountThemeColorPicker } from "@/features/theme/popup-color-picker";
 
 document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
@@ -37,6 +39,7 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
         change only applies to tabs opened or refreshed after you change it.
       </p>
       <div id="feature-list" class="feature-list"></div>
+      <div id="customize-nav-section"></div>
     </section>
 
     <section class="panel">
@@ -85,3 +88,9 @@ async function renderFeatureList(): Promise<void> {
 
 void renderFeatureList();
 void mountThemeColorPicker(document.querySelector<HTMLDivElement>("#theme-colors")!);
+mountCustomizeNavSection(document.querySelector<HTMLDivElement>("#customize-nav-section")!);
+
+// Runs after every section above exists in the DOM — generic, not specific
+// to Customize Nav: expands + focuses whichever <details id="..."> matches
+// this page's ?section= param, if any.
+expandSectionFromUrl();

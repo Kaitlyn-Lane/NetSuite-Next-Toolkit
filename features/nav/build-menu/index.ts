@@ -2,7 +2,10 @@
 
 import { NAV_MENU_BUTTON_SELECTOR } from "@/core/selectors";
 import { waitForElement } from "@/core/utils";
-import { extractNav, type MenuNode, type NavExtraction } from "./extractor";
+import { setNavMenu } from "@/features/nav/storage";
+import type { MenuNode, NavExtraction } from "@/features/nav/types";
+
+import { extractNav } from "./extractor";
 
 const CLOSE_BUTTON_SELECTOR = "a#ask-oracle-main_ao-close";
 const NAV_PANEL_SELECTOR = 'div[slot="askOracleCustom"]';
@@ -61,7 +64,7 @@ function countMenuLeaves(nodes: MenuNode[]): number {
 }
 
 function countNavLinks(result: NavExtraction): number {
-  return countMenuLeaves([...result.menu, ...result.shortcuts, ...result.create]);
+  return countMenuLeaves(result);
 }
 
 export async function buildNavMenu(): Promise<{ result: NavExtraction; count: number }> {
@@ -80,7 +83,7 @@ export async function buildNavMenu(): Promise<{ result: NavExtraction; count: nu
     getCloseButton().click();
     opened = false;
 
-    await chrome.storage.local.set({ navMenu: result });
+    await setNavMenu(result);
     const count = countNavLinks(result);
 
     return { result, count };

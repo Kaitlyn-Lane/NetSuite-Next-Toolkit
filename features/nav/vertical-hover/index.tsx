@@ -2,47 +2,15 @@ import { createRoot } from "react-dom/client";
 
 import { NAV_MENU_BUTTON_SELECTOR } from "@/core/selectors";
 import { waitForElement } from "@/core/utils";
-import type { MenuContainerNode, MenuNode, NavExtraction } from "@/features/nav/build-menu/extractor";
+import { filterHiddenExtraction } from "@/features/nav/customize-nav/filterHidden";
+import { getNavMenu } from "@/features/nav/storage";
 import { applyThemeColors } from "@/features/theme/apply-theme-colors";
 import { DEFAULT_THEME_COLORS, THEME_COLORS_STORAGE_KEY, type ThemeColors } from "@/features/theme/types";
 
 import { RootMenu } from "./RootMenu";
 import "./styles.css";
 
-const NAV_MENU_STORAGE_KEY = "navMenu";
 const TOOLTIP_SUPPRESS_CLASS = "nst-suppress-tooltip";
-
-// nav.shortcuts/nav.create each already contain a container node labeled
-// "Shortcuts"/"Create" (the section itself, with its real links as
-// children) — use its children directly instead of wrapping it again
-// under a second synthetic group with the same label, which just
-// double-nests.
-function flattenSectionChildren(sections: MenuNode[]): MenuNode[] {
-  return sections.flatMap((section) => (section.type === "container" ? section.children : [section]));
-}
-
-// The three stored fields become the top-level hover groups. Order here
-// is the visual stacking order (top of stack first, closest to the
-// button last) — Shortcuts, Menu, Create matches what was asked for.
-function buildTopLevelGroups(nav: NavExtraction): MenuContainerNode[] {
-  return [
-    {
-      type: "container",
-      label: "Shortcuts",
-      automationType: null,
-      href: null,
-      children: flattenSectionChildren(nav.shortcuts),
-    },
-    { type: "container", label: "Menu", automationType: null, href: null, children: nav.menu },
-    {
-      type: "container",
-      label: "Create",
-      automationType: null,
-      href: null,
-      children: flattenSectionChildren(nav.create),
-    },
-  ];
-}
 
 // If NetSuite's hover tooltip here were driven by the `title` attribute,
 // clearing it would be enough — it isn't (confirmed: it's a JET popup
@@ -66,8 +34,8 @@ function suppressNativeTooltip(button: HTMLElement): void {
 }
 
 export async function runNavVerticalHover(): Promise<void> {
-  const stored = await chrome.storage.local.get([NAV_MENU_STORAGE_KEY, THEME_COLORS_STORAGE_KEY]);
-  const navMenu = stored[NAV_MENU_STORAGE_KEY] as NavExtraction | undefined;
+  const navMenu = await getNavMenu();
+  const stored = await chrome.storage.local.get(THEME_COLORS_STORAGE_KEY);
   const themeColors: ThemeColors = {
     ...DEFAULT_THEME_COLORS,
     ...(stored[THEME_COLORS_STORAGE_KEY] as Partial<ThemeColors> | undefined),
@@ -80,6 +48,13 @@ export async function runNavVerticalHover(): Promise<void> {
     return;
   }
 
+  // Each top-level entry (Shortcuts/Menu/Create) is a synthetic wrapper
+  // with no href of its own (see extractor.ts's buildTopLevelSection) —
+  // unlike a nested container, if hiding leaves one with zero children,
+  // render it as absent rather than as a dead-end flyout trigger.
+  const groups = filterHiddenExtraction(navMenu).filter(
+    (node) => node.type !== "container" || node.children.length > 0,
+  );
   applyThemeColors(themeColors);
 
   const button = (await waitForElement(NAV_MENU_BUTTON_SELECTOR, { timeout: 10000 })) as HTMLElement;
@@ -88,5 +63,5 @@ export async function runNavVerticalHover(): Promise<void> {
   const mountPoint = document.createElement("div");
   document.body.appendChild(mountPoint);
 
-  createRoot(mountPoint).render(<RootMenu button={button} groups={buildTopLevelGroups(navMenu)} />);
+  createRoot(mountPoint).render(<RootMenu button={button} groups={groups} />);
 }
