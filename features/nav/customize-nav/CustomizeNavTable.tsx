@@ -70,7 +70,7 @@ export function CustomizeNavTable() {
         ))}
       </ul>
       <div className="cn-save-row">
-        <Button type="button" isDisabled={!dirty} onPress={handleSave}>
+        <Button type="button" className="btn btn-primary" isDisabled={!dirty} onPress={handleSave}>
           Save
         </Button>
         <p className="cn-status-message">

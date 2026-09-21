@@ -1,22 +1,18 @@
-/* Styling for the customize-nav tree + trigger button, shared by the popup
-   and the options page. Deliberately plain — legibility at both a narrow
-   popup width and a full options-page width, not visual polish. */
+/* Styling for the customize-nav tree, mounted inside the options page's
+   "Customize Nav" panel (a .panel, see entrypoints/options/style.css).
+   Shared primitives — --nst-* variables, .btn, .switch/.switch-track —
+   come from core/theme.css, already loaded by that page; this file only
+   covers what's specific to the tree/row layout. */
 
 .cn-status-message {
-  margin: 0;
-  font-size: 0.9em;
-  min-height: 1.2em;
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: var(--nst-text-muted);
+  min-height: 1.1em;
 }
 
 .cn-create-nav-menu {
-  margin-bottom: 8px;
-}
-
-.cn-save-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 8px;
+  margin-bottom: 4px;
 }
 
 .cn-tree,
@@ -26,12 +22,22 @@
   padding: 0;
 }
 
+.cn-tree-children {
+  margin-top: 2px;
+}
+
 .cn-row-content {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 3px 2px;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 8px;
   min-width: 0;
+  transition: background-color 120ms ease;
+}
+
+.cn-row-content:hover {
+  background: var(--nst-surface);
 }
 
 .cn-row-dimmed {
@@ -39,20 +45,26 @@
 }
 
 .cn-expand-btn {
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
   flex-shrink: 0;
   padding: 0;
   border: none;
   background: none;
   cursor: pointer;
-  font-size: 10px;
+  color: var(--nst-text-muted);
+  font-size: 15px;
   line-height: 1;
+  transition: transform 150ms ease;
+}
+
+.cn-expand-btn.expanded {
+  transform: rotate(90deg);
 }
 
 .cn-expand-spacer {
   display: inline-block;
-  width: 16px;
+  width: 18px;
   flex-shrink: 0;
 }
 
@@ -61,56 +73,19 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   min-width: 0;
+  font-size: 13px;
 }
 
 .cn-section-label {
   font-weight: 600;
+  font-size: 13.5px;
 }
 
-/* Switch: a plain track + thumb indicator. The label text lives in
-   .cn-row-label next to it, not inside the Switch itself, so the switch's
-   own children are just the indicator. */
-.react-aria-Switch {
-  display: inline-flex;
+.cn-save-row {
+  display: flex;
   align-items: center;
-  flex-shrink: 0;
-  cursor: pointer;
-}
-
-.react-aria-Switch[data-disabled] {
-  cursor: not-allowed;
-}
-
-.cn-switch-indicator {
-  width: 28px;
-  height: 16px;
-  border-radius: 999px;
-  background: #ccc;
-  position: relative;
-  flex-shrink: 0;
-  transition: background 0.15s ease;
-}
-
-.cn-switch-indicator::before {
-  content: "";
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: #fff;
-  transition: transform 0.15s ease;
-}
-
-.react-aria-Switch[data-selected] .cn-switch-indicator {
-  background: #2563eb;
-}
-
-.react-aria-Switch[data-selected] .cn-switch-indicator::before {
-  transform: translateX(12px);
-}
-
-.react-aria-Switch[data-disabled] .cn-switch-indicator {
-  opacity: 0.6;
+  gap: 12px;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--nst-border);
 }

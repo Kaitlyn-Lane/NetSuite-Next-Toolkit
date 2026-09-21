@@ -6,6 +6,7 @@ import {
   type BuildNavMenuResponse,
 } from "@/features/nav/build-menu/types/messages";
 import { FEATURE_FLAGS, getFeatureFlagState, setFeatureEnabled } from "@/core/feature-flags";
+import { mountCustomizeNavTile } from "@/features/nav/customize-nav";
 import { mountThemeColorPicker } from "@/features/theme/popup-color-picker";
 
 document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
@@ -17,6 +18,10 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
     <section class="action-section">
       <button id="create-nav-menu-btn" type="button" class="btn btn-primary">Create Menu Nav</button>
       <p id="status" class="status"></p>
+    </section>
+
+    <section class="nav-customize-section">
+      <div id="customize-nav-tile"></div>
     </section>
 
     <section class="features-section">
@@ -115,3 +120,4 @@ async function renderFeatureFlags(): Promise<void> {
 
 void renderFeatureFlags();
 void mountThemeColorPicker(document.querySelector<HTMLDivElement>("#theme-colors")!);
+mountCustomizeNavTile(document.querySelector<HTMLDivElement>("#customize-nav-tile")!);

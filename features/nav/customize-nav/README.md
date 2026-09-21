@@ -53,8 +53,24 @@ left out of scope for now, not overlooked.
   out of `entrypoints/popup/main.ts` into a shared component so both the
   popup and the options page can trigger a re-scrape without duplicating the
   `BUILD_NAV_MENU` messaging logic.
+- `PopupTile.ts` — `mountCustomizeNavTile(container)`, a small vanilla
+  (non-React) card in the popup that just links to the options page's
+  panel via `chrome.runtime.openOptionsPage()`. The popup is too narrow for
+  the tree itself (arbitrary depth, a switch per row), so it doesn't try.
+- `OptionsPanel.tsx` — `mountCustomizeNavPanel(container)`, mounts
+  `CreateNavMenuButton` + `CustomizeNavTable` together into a React root,
+  remounting the table after a successful re-scrape so it doesn't show
+  stale tree state. This is the one place `entrypoints/options/main.ts`
+  (otherwise plain vanilla TS) pulls in React — kept self-contained here so
+  `main.ts` never needs JSX.
 
 `index.ts` re-exports the above as this feature's public surface.
+
+Visual styling (the tree rows, switch, save row) reuses the shared
+`--nst-*` CSS variables and the `.switch`/`.switch-track`/`.btn` primitives
+from `core/theme.css`, rather than hand-rolling separate colors — see that
+file and `entrypoints/options/style.css`'s `.panel` for the surrounding
+chrome this tree renders inside of.
 
 ## Data flow
 
@@ -66,8 +82,7 @@ the same key → next time `vertical-hover` runs (i.e. after a tab refresh),
 `filterHiddenExtraction` reads that tree and drops the flagged
 nodes/subtrees.
 
-Not yet mounted anywhere — wiring `CreateNavMenuButton` and `CustomizeNavTable`
-into `entrypoints/popup/` and a new `entrypoints/options/` is being handled
-separately (a "make it pretty" branch owns the popup/options UI). This
-feature only owns the hide-flag logic and the tree/table UI, exported as its
-public surface via `index.ts`.
+Mounted from `entrypoints/popup/main.ts` (`mountCustomizeNavTile`, just a
+link out) and `entrypoints/options/main.ts` (`mountCustomizeNavPanel`, the
+actual tree) — both entrypoints stay thin, importing only from this
+feature's `index.ts`.

@@ -32,22 +32,23 @@ export function NodeRow({ node, depth, ancestorHidden, onToggle }: NodeRowProps)
         {hasChildren ? (
           <button
             type="button"
-            className="cn-expand-btn"
+            className={expanded ? "cn-expand-btn expanded" : "cn-expand-btn"}
             onClick={() => setExpanded((value) => !value)}
             aria-label={expanded ? "Collapse" : "Expand"}
           >
-            {expanded ? "▾" : "▸"}
+            ›
           </button>
         ) : (
           <span className="cn-expand-spacer" aria-hidden="true" />
         )}
         <Switch
+          className="switch"
           isSelected={!isHidden}
           isDisabled={ancestorHidden}
           onChange={(selected) => onToggle(node, !selected)}
           aria-label={`Show "${label}" in nav`}
         >
-          <span className="cn-switch-indicator" />
+          <span className="switch-track" />
         </Switch>
         <span
           className={depth === 0 ? "cn-row-label cn-section-label" : "cn-row-label"}

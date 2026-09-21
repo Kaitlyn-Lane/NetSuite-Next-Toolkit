@@ -136,6 +136,14 @@ body {
   outline-offset: 2px;
 }
 
+.switch input:disabled ~ .switch-track {
+  opacity: 0.5;
+}
+
+.switch:has(input:disabled) {
+  cursor: not-allowed;
+}
+
 .callout {
   background: var(--nst-surface);
   border: 1px solid var(--nst-border);

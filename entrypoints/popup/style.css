@@ -63,6 +63,53 @@ body {
   color: var(--nst-text-muted);
 }
 
+.nav-tile {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  background: var(--nst-surface);
+  border: 1px solid var(--nst-border);
+  border-radius: 10px;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  transition:
+    border-color 120ms ease,
+    background-color 120ms ease;
+}
+
+.nav-tile:hover {
+  border-color: var(--nst-accent);
+}
+
+.nav-tile-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.nav-tile-title {
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.nav-tile-desc {
+  font-size: 11px;
+  line-height: 1.35;
+  color: var(--nst-text-muted);
+}
+
+.nav-tile-chevron {
+  font-size: 16px;
+  color: var(--nst-text-muted);
+  flex-shrink: 0;
+}
+
 .hint {
   margin: 8px 0 0;
   font-size: 11px;

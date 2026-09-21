@@ -1,6 +1,7 @@
 import "@/core/theme.css";
 import "./style.css";
 import { FEATURE_FLAGS, getFeatureFlagState, setFeatureEnabled } from "@/core/feature-flags";
+import { mountCustomizeNavPanel } from "@/features/nav/customize-nav";
 import { mountThemeColorPicker } from "@/features/theme/popup-color-picker";
 
 document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
@@ -37,6 +38,15 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
         change only applies to tabs opened or refreshed after you change it.
       </p>
       <div id="feature-list" class="feature-list"></div>
+    </section>
+
+    <section class="panel" id="customize-nav">
+      <h2 class="section-label">Customize Nav</h2>
+      <p class="panel-intro">
+        Hide any top-level layer, container, or link from the vertical hover
+        nav. Hiding a container hides everything nested under it.
+      </p>
+      <div id="customize-nav-panel"></div>
     </section>
 
     <section class="panel">
@@ -85,3 +95,4 @@ async function renderFeatureList(): Promise<void> {
 
 void renderFeatureList();
 void mountThemeColorPicker(document.querySelector<HTMLDivElement>("#theme-colors")!);
+mountCustomizeNavPanel(document.querySelector<HTMLDivElement>("#customize-nav-panel")!);

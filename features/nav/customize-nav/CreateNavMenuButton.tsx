@@ -54,7 +54,7 @@ export function CreateNavMenuButton({ onSuccess }: { onSuccess?: () => void }) {
 
   return (
     <div className="cn-create-nav-menu">
-      <Button type="button" isDisabled={busy} onPress={() => void handlePress()}>
+      <Button type="button" className="btn btn-primary" isDisabled={busy} onPress={() => void handlePress()}>
         Create Menu Nav
       </Button>
       <p className="cn-status-message">{status}</p>
