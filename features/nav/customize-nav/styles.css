@@ -1,0 +1,115 @@
+/* Styling for the customize-nav tree + trigger button, shared by the popup
+   and the options page. Deliberately plain — legibility at both a narrow
+   popup width and a full options-page width, not visual polish. */
+
+.cn-status-message {
+  margin: 0;
+  font-size: 0.9em;
+  min-height: 1.2em;
+}
+
+.cn-refresh-note {
+  margin: 0 0 8px;
+  font-size: 0.85em;
+  color: #555;
+}
+
+.cn-create-nav-menu {
+  margin-bottom: 8px;
+}
+
+.cn-tree,
+.cn-tree-children {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.cn-row-content {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 2px;
+  min-width: 0;
+}
+
+.cn-row-dimmed {
+  opacity: 0.5;
+}
+
+.cn-expand-btn {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 10px;
+  line-height: 1;
+}
+
+.cn-expand-spacer {
+  display: inline-block;
+  width: 16px;
+  flex-shrink: 0;
+}
+
+.cn-row-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.cn-section-label {
+  font-weight: 600;
+}
+
+/* Switch: a plain track + thumb indicator. The label text lives in
+   .cn-row-label next to it, not inside the Switch itself, so the switch's
+   own children are just the indicator. */
+.react-aria-Switch {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.react-aria-Switch[data-disabled] {
+  cursor: not-allowed;
+}
+
+.cn-switch-indicator {
+  width: 28px;
+  height: 16px;
+  border-radius: 999px;
+  background: #ccc;
+  position: relative;
+  flex-shrink: 0;
+  transition: background 0.15s ease;
+}
+
+.cn-switch-indicator::before {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 0.15s ease;
+}
+
+.react-aria-Switch[data-selected] .cn-switch-indicator {
+  background: #2563eb;
+}
+
+.react-aria-Switch[data-selected] .cn-switch-indicator::before {
+  transform: translateX(12px);
+}
+
+.react-aria-Switch[data-disabled] .cn-switch-indicator {
+  opacity: 0.6;
+}

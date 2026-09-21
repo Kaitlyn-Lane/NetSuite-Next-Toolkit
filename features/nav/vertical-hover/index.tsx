@@ -3,6 +3,8 @@ import { createRoot } from "react-dom/client";
 import { NAV_MENU_BUTTON_SELECTOR } from "@/core/selectors";
 import { waitForElement } from "@/core/utils";
 import type { MenuContainerNode, MenuNode, NavExtraction } from "@/features/nav/build-menu/extractor";
+import { filterHiddenExtraction } from "@/features/nav/customize-nav/filterHidden";
+import { getHiddenKeys } from "@/features/nav/customize-nav/storage";
 
 import { RootMenu } from "./RootMenu";
 import "./styles.css";
@@ -23,7 +25,7 @@ function flattenSectionChildren(sections: MenuNode[]): MenuNode[] {
 // is the visual stacking order (top of stack first, closest to the
 // button last) — Shortcuts, Menu, Create matches what was asked for.
 function buildTopLevelGroups(nav: NavExtraction): MenuContainerNode[] {
-  return [
+  const groups: MenuContainerNode[] = [
     {
       type: "container",
       label: "Shortcuts",
@@ -40,6 +42,13 @@ function buildTopLevelGroups(nav: NavExtraction): MenuContainerNode[] {
       children: flattenSectionChildren(nav.create),
     },
   ];
+
+  // Unlike a nested container (see filterHiddenExtraction), these three
+  // synthetic top-level groups have no href of their own — they're pure
+  // wrappers assembled here, not real scraped nodes. If hiding leaves one
+  // with zero children, render it as absent rather than as a dead-end
+  // flyout trigger with nothing under it and nowhere to link to.
+  return groups.filter((group) => group.children.length > 0);
 }
 
 // If NetSuite's hover tooltip here were driven by the `title` attribute,
@@ -74,11 +83,16 @@ export async function runNavVerticalHover(): Promise<void> {
     return;
   }
 
+  const hiddenKeys = await getHiddenKeys();
+  const filteredNavMenu = filterHiddenExtraction(navMenu, hiddenKeys);
+
   const button = (await waitForElement(NAV_MENU_BUTTON_SELECTOR, { timeout: 10000 })) as HTMLElement;
   suppressNativeTooltip(button);
 
   const mountPoint = document.createElement("div");
   document.body.appendChild(mountPoint);
 
-  createRoot(mountPoint).render(<RootMenu button={button} groups={buildTopLevelGroups(navMenu)} />);
+  createRoot(mountPoint).render(
+    <RootMenu button={button} groups={buildTopLevelGroups(filteredNavMenu)} />,
+  );
 }
