@@ -42,7 +42,10 @@ export async function runNavVerticalHover(): Promise<void> {
   };
 
   if (!navMenu) {
-    console.warn(
+    // Expected on first install (or any page load before "Create Menu Nav"
+    // has ever been run) — not an error, so console.debug rather than
+    // warn/error, which most DevTools consoles hide by default anyway.
+    console.debug(
       '[NST] nav-vertical-hover: no stored nav menu found — run "Create Menu Nav" from the popup first',
     );
     return;
