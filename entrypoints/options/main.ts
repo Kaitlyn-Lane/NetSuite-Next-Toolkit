@@ -1,7 +1,8 @@
 import "@/core/theme.css";
 import "./style.css";
 import { FEATURE_FLAGS, getFeatureFlagState, setFeatureEnabled } from "@/core/feature-flags";
-import { mountCustomizeNavPanel } from "@/features/nav/customize-nav";
+import { expandSectionFromUrl } from "@/core/section-params";
+import { mountCustomizeNavSection } from "@/features/nav/customize-nav";
 import { mountThemeColorPicker } from "@/features/theme/popup-color-picker";
 
 document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
@@ -40,14 +41,7 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
       <div id="feature-list" class="feature-list"></div>
     </section>
 
-    <section class="panel" id="customize-nav">
-      <h2 class="section-label">Customize Nav</h2>
-      <p class="panel-intro">
-        Hide any top-level layer, container, or link from the vertical hover
-        nav. Hiding a container hides everything nested under it.
-      </p>
-      <div id="customize-nav-panel"></div>
-    </section>
+    <div id="customize-nav-section"></div>
 
     <section class="panel">
       <h2 class="section-label">Appearance</h2>
@@ -95,4 +89,9 @@ async function renderFeatureList(): Promise<void> {
 
 void renderFeatureList();
 void mountThemeColorPicker(document.querySelector<HTMLDivElement>("#theme-colors")!);
-mountCustomizeNavPanel(document.querySelector<HTMLDivElement>("#customize-nav-panel")!);
+mountCustomizeNavSection(document.querySelector<HTMLDivElement>("#customize-nav-section")!);
+
+// Runs after every section above exists in the DOM — generic, not specific
+// to Customize Nav: expands + focuses whichever <details id="..."> matches
+// this page's ?section= param, if any.
+expandSectionFromUrl();

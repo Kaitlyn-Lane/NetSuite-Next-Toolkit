@@ -57,7 +57,8 @@ export function CustomizeNavTable() {
   if (navMenu === null) {
     return (
       <p className="cn-status-message">
-        No stored nav menu found — run &quot;Create Menu Nav&quot; first.
+        No nav menu saved yet — see "Instructions" above to run "Create Menu Nav" from the popup on a
+        NetSuite tab, then reload this page.
       </p>
     );
   }

@@ -51,28 +51,42 @@ left out of scope for now, not overlooked.
   ancestor stays hidden (`filterHiddenExtraction` drops the whole subtree
   regardless of a descendant's own flag). A depth-0 row (a top-level layer)
   gets a bold label to stay visually distinct from what's nested under it.
-- `CreateNavMenuButton.tsx` — the "Create Menu Nav" scrape trigger, pulled
-  out of `entrypoints/popup/main.ts` into a shared component so both the
-  popup and the options page can trigger a re-scrape without duplicating the
-  `BUILD_NAV_MENU` messaging logic.
 - `PopupTile.ts` — `mountCustomizeNavTile(container)`, a small vanilla
-  (non-React) card in the popup that just links to the options page's
-  panel via `chrome.runtime.openOptionsPage()`. The popup is too narrow for
-  the tree itself (arbitrary depth, a switch per row), so it doesn't try.
-- `OptionsPanel.tsx` — `mountCustomizeNavPanel(container)`, mounts
-  `CreateNavMenuButton` + `CustomizeNavTable` together into a React root,
-  remounting the table after a successful re-scrape so it doesn't show
-  stale tree state. This is the one place `entrypoints/options/main.ts`
-  (otherwise plain vanilla TS) pulls in React — kept self-contained here so
-  `main.ts` never needs JSX.
+  (non-React) card in the popup that links to the options page's section.
+  The popup is too narrow for the tree itself (arbitrary depth, a switch
+  per row), so it doesn't try. Opens via `chrome.tabs.create` with a
+  `?section=customize-nav` URL param (not `chrome.runtime.openOptionsPage()`,
+  which has no way to pass one) — also exports `CUSTOMIZE_NAV_SECTION_ID`,
+  the id shared with `OptionsSection.tsx` so the two always agree on the
+  same string.
+- `OptionsSection.tsx` — `mountCustomizeNavSection(container)`, builds the
+  whole collapsible `<details id="customize-nav" class="collapsible panel">`
+  section (matching the popup's own `.collapsible` pattern) and mounts
+  `CustomizeNavTable` inside it. Collapsed by default;
+  `core/section-params.ts`'s `expandSectionFromUrl()` (called generically
+  from `entrypoints/options/main.ts`, not specific to this section) opens
+  and focuses it when arriving via the popup tile's URL param. This is the
+  one place `entrypoints/options/main.ts` (otherwise plain vanilla TS)
+  pulls in React — kept self-contained here so `main.ts` never needs JSX.
+  There's no "Create Menu Nav" trigger on this page — the options page
+  isn't a NetSuite tab, so that action would have nothing to scrape;
+  `CustomizeNavTable`'s empty state instead points back at the
+  "Instructions" panel above.
 
 `index.ts` re-exports the above as this feature's public surface.
 
 Visual styling (the tree rows, switch, save row) reuses the shared
-`--nst-*` CSS variables and the `.switch`/`.switch-track`/`.btn` primitives
-from `core/theme.css`, rather than hand-rolling separate colors — see that
-file and `entrypoints/options/style.css`'s `.panel` for the surrounding
-chrome this tree renders inside of.
+`--nst-*` CSS variables and the `.switch`/`.switch-track`/`.btn`/
+`.collapsible` primitives from `core/theme.css`, rather than hand-rolling
+separate colors — see that file and `entrypoints/options/style.css`'s
+`.panel` for the surrounding chrome this tree renders inside of. Note:
+`react-aria-components`' `<Switch>` wraps its native input in its own
+extra hidden `<span>`, so it and `.switch-track` aren't DOM siblings —
+`core/theme.css`'s `.switch[data-selected]`/`[data-disabled]` rules (a
+descendant selector against the data attributes RAC puts on the outer
+`.switch` label) are what actually style it, not the `:checked ~` sibling
+rules that work for a hand-built `<span class="switch"><input/>...`
+elsewhere in the app.
 
 ## Data flow
 
@@ -85,6 +99,6 @@ the same key → next time `vertical-hover` runs (i.e. after a tab refresh),
 nodes/subtrees.
 
 Mounted from `entrypoints/popup/main.ts` (`mountCustomizeNavTile`, just a
-link out) and `entrypoints/options/main.ts` (`mountCustomizeNavPanel`, the
+link out) and `entrypoints/options/main.ts` (`mountCustomizeNavSection`, the
 actual tree) — both entrypoints stay thin, importing only from this
 feature's `index.ts`.
