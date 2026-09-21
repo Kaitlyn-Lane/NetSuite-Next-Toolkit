@@ -56,10 +56,21 @@
   flex-shrink: 0;
 }
 
-/* Options page section (OptionsSection.tsx) — the description lives inside
-   <summary> (see that file for why), so it needs to escape the uppercase/
-   bold/small styling .section-label puts on the summary itself and read
-   as an ordinary paragraph on its own line underneath the title. */
+/* Options page section (OptionsSection.tsx) — boxed the same as a
+   .feature-card (Vertical Hover Nav's own row in the list above) so the
+   two read as the same kind of thing, just sitting below the toggle list
+   rather than inside it. */
+.cn-nested-section {
+  background: var(--nst-surface);
+  border: 1px solid var(--nst-border);
+  border-radius: 10px;
+  padding: 12px 14px;
+}
+
+/* The description lives inside <summary> (see that file for why), so it
+   needs to escape the uppercase/bold/small styling .section-label puts
+   on the summary itself and read as an ordinary paragraph on its own
+   line underneath the title. */
 .cn-section-intro {
   display: block;
   margin-top: 4px;

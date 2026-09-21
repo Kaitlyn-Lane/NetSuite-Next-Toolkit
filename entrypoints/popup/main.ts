@@ -22,9 +22,9 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
 
     <section class="features-section">
       <h2 class="section-label">Features</h2>
-      <p class="hint">Changes take effect after refreshing NetSuite tabs.</p>
       <div id="feature-flags" class="feature-list"></div>
       <div id="customize-nav-tile"></div>
+      <p class="hint">Changes take effect after refreshing NetSuite tabs.</p>
     </section>
 
     <section class="appearance-section">

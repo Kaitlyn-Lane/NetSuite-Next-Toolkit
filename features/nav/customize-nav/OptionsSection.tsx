@@ -17,12 +17,14 @@ import { CustomizeNavTable } from "./CustomizeNavTable";
 // styles.css) resets the uppercase/bold styling .section-label would
 // otherwise apply to it.
 //
-// No .panel class here (just .collapsible) — the container this mounts
-// into already lives inside the Features section's own .panel, so this
-// shouldn't draw a second nested card around itself.
+// No .panel class here — the container this mounts into already lives
+// inside the Features section's own .panel. .cn-nested-section (styles.css)
+// instead gives this its own .feature-card-style box, so it visually
+// matches Vertical Hover Nav's own row in the toggle list above it rather
+// than looking like a different kind of UI bolted on underneath.
 export function mountCustomizeNavSection(container: HTMLElement): void {
   container.innerHTML = `
-    <details id="${CUSTOMIZE_NAV_SECTION_ID}" class="collapsible">
+    <details id="${CUSTOMIZE_NAV_SECTION_ID}" class="collapsible cn-nested-section">
       <summary class="section-label">
         Customize Nav
         <span class="cn-section-intro">

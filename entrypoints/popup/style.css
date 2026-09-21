@@ -27,6 +27,16 @@ body {
   color: var(--nst-text-muted);
 }
 
+/* .features-section has no card of its own (the feature-list card and
+   the customize-nav tile are its children) — without an explicit gap
+   here, those children just stack with whatever margin they happen to
+   carry (often none), so they end up flush against each other. */
+.features-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
 .feature-list {
   display: flex;
   flex-direction: column;

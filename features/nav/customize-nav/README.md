@@ -76,12 +76,14 @@ left out of scope for now, not overlooked.
   the id shared with `OptionsSection.tsx` so the two always agree on the
   same string.
 - `OptionsSection.tsx` — `mountCustomizeNavSection(container)`, builds the
-  whole collapsible `<details id="customize-nav" class="collapsible">`
-  section (matching the popup's own `.collapsible` pattern) and mounts
-  `CustomizeNavTable` inside it — nested inside the options page's Features
-  panel (see `entrypoints/options/main.ts`), not its own top-level section,
-  so no `.panel` class here; it shouldn't draw a second card inside that
-  one. The description lives inside `<summary>` itself (`.cn-section-intro`
+  whole collapsible `<details id="customize-nav" class="collapsible
+  cn-nested-section">` section (matching the popup's own `.collapsible`
+  pattern) and mounts `CustomizeNavTable` inside it — nested inside the
+  options page's Features panel (see `entrypoints/options/main.ts`), not
+  its own top-level `.panel`, but `.cn-nested-section` (`styles.css`) gives
+  it a `.feature-card`-style box of its own anyway, so it visually matches
+  Vertical Hover Nav's own row in the toggle list above rather than reading
+  as a different kind of UI. The description lives inside `<summary>` itself (`.cn-section-intro`
   in `styles.css` undoes the uppercase/bold `.section-label` styling it'd
   otherwise inherit there), not as a sibling after it, since a native
   `<details>` hides everything after `<summary>` while collapsed and the
