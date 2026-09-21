@@ -20,9 +20,7 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
       <p id="status" class="status"></p>
     </section>
 
-    <section class="nav-customize-section">
-      <div id="customize-nav-tile"></div>
-    </section>
+    <div id="customize-nav-tile"></div>
 
     <section class="features-section">
       <h2 class="section-label">Features</h2>
