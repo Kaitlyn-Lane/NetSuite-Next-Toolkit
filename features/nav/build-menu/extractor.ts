@@ -24,18 +24,12 @@ export interface MenuLeafNode {
 
 export type MenuNode = MenuContainerNode | MenuLeafNode;
 
-export type NavSection = "menu" | "shortcuts" | "create";
-
-export interface NavExtraction {
-  menu: MenuNode[];
-  shortcuts: MenuNode[];
-  create: MenuNode[];
-  // Hide flags for the three top-level layers themselves, set by
-  // features/nav/customize-nav. These three aren't MenuNodes — they're this
-  // interface's own fields — so they can't carry a `hidden` field the way a
-  // MenuNode does, hence the separate map.
-  hiddenSections?: Partial<Record<NavSection, boolean>>;
-}
+// The top-level layers (Shortcuts, Menu, Create) are just the first three
+// entries of this array — each a MenuContainerNode like any other, built by
+// extractNav() below — not a separate named shape. That means hiding one of
+// them uses the exact same `MenuNode.hidden` field as hiding anything else,
+// with no parallel per-section flag to keep in sync.
+export type NavExtraction = MenuNode[];
 
 function extractShortcutAndCreateSections(): MenuContainerNode[] {
   const sections = document.querySelectorAll(
@@ -131,7 +125,28 @@ export function extractMenu(): MenuNode[] {
   return Array.from(menus).map(extractMenuNode);
 }
 
+// `sections` is 0 or more containers already labeled `label` (see
+// splitShortcutsAndCreate) wrapping the section's real links — unwrap so
+// this doesn't end up double-nested under a second container with the same
+// label.
+function buildTopLevelSection(label: string, sections: MenuNode[]): MenuContainerNode {
+  return {
+    type: 'container',
+    label,
+    automationType: null,
+    href: null,
+    children: sections.flatMap((section) => (section.type === 'container' ? section.children : [section])),
+  };
+}
+
+// Order here is the visual stacking order vertical-hover renders these in
+// (top of stack first, closest to the nav button last) — Shortcuts, Menu,
+// Create.
 export function extractNav(): NavExtraction {
   const { shortcuts, create } = splitShortcutsAndCreate(extractShortcutAndCreateSections());
-  return { menu: extractMenu(), shortcuts, create };
+  return [
+    buildTopLevelSection('Shortcuts', shortcuts),
+    { type: 'container', label: 'Menu', automationType: null, href: null, children: extractMenu() },
+    buildTopLevelSection('Create', create),
+  ];
 }

@@ -61,7 +61,7 @@ function countMenuLeaves(nodes: MenuNode[]): number {
 }
 
 function countNavLinks(result: NavExtraction): number {
-  return countMenuLeaves([...result.menu, ...result.shortcuts, ...result.create]);
+  return countMenuLeaves(result);
 }
 
 export async function buildNavMenu(): Promise<{ result: NavExtraction; count: number }> {

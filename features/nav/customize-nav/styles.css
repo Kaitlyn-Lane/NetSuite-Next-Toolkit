@@ -8,14 +8,15 @@
   min-height: 1.2em;
 }
 
-.cn-refresh-note {
-  margin: 0 0 8px;
-  font-size: 0.85em;
-  color: #555;
-}
-
 .cn-create-nav-menu {
   margin-bottom: 8px;
+}
+
+.cn-save-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
 }
 
 .cn-tree,

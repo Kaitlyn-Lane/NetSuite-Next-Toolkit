@@ -1,9 +1,9 @@
 import type { NavExtraction } from "@/features/nav/build-menu/extractor";
 
 // Same key features/nav/build-menu and features/nav/vertical-hover already
-// read/write — hide flags live directly on this object (see extractor.ts's
-// `hidden`/`hiddenSections` fields) rather than in a second storage key, so
-// there's nothing to reconcile between two independent stores.
+// read/write — hide flags live directly on this tree (see extractor.ts's
+// `MenuNode.hidden` field) rather than in a second storage key, so there's
+// nothing to reconcile between two independent stores.
 export const NAV_MENU_STORAGE_KEY = "navMenu";
 
 export async function getNavMenu(): Promise<NavExtraction | undefined> {

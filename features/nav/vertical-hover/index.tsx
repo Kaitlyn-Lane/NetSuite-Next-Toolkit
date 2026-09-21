@@ -2,7 +2,7 @@ import { createRoot } from "react-dom/client";
 
 import { NAV_MENU_BUTTON_SELECTOR } from "@/core/selectors";
 import { waitForElement } from "@/core/utils";
-import type { MenuContainerNode, MenuNode, NavExtraction } from "@/features/nav/build-menu/extractor";
+import type { NavExtraction } from "@/features/nav/build-menu/extractor";
 import { filterHiddenExtraction } from "@/features/nav/customize-nav/filterHidden";
 
 import { RootMenu } from "./RootMenu";
@@ -10,45 +10,6 @@ import "./styles.css";
 
 const NAV_MENU_STORAGE_KEY = "navMenu";
 const TOOLTIP_SUPPRESS_CLASS = "nst-suppress-tooltip";
-
-// nav.shortcuts/nav.create each already contain a container node labeled
-// "Shortcuts"/"Create" (the section itself, with its real links as
-// children) — use its children directly instead of wrapping it again
-// under a second synthetic group with the same label, which just
-// double-nests.
-function flattenSectionChildren(sections: MenuNode[]): MenuNode[] {
-  return sections.flatMap((section) => (section.type === "container" ? section.children : [section]));
-}
-
-// The three stored fields become the top-level hover groups. Order here
-// is the visual stacking order (top of stack first, closest to the
-// button last) — Shortcuts, Menu, Create matches what was asked for.
-function buildTopLevelGroups(nav: NavExtraction): MenuContainerNode[] {
-  const groups: MenuContainerNode[] = [
-    {
-      type: "container",
-      label: "Shortcuts",
-      automationType: null,
-      href: null,
-      children: flattenSectionChildren(nav.shortcuts),
-    },
-    { type: "container", label: "Menu", automationType: null, href: null, children: nav.menu },
-    {
-      type: "container",
-      label: "Create",
-      automationType: null,
-      href: null,
-      children: flattenSectionChildren(nav.create),
-    },
-  ];
-
-  // Unlike a nested container (see filterHiddenExtraction), these three
-  // synthetic top-level groups have no href of their own — they're pure
-  // wrappers assembled here, not real scraped nodes. If hiding leaves one
-  // with zero children, render it as absent rather than as a dead-end
-  // flyout trigger with nothing under it and nowhere to link to.
-  return groups.filter((group) => group.children.length > 0);
-}
 
 // If NetSuite's hover tooltip here were driven by the `title` attribute,
 // clearing it would be enough — it isn't (confirmed: it's a JET popup
@@ -82,7 +43,13 @@ export async function runNavVerticalHover(): Promise<void> {
     return;
   }
 
-  const filteredNavMenu = filterHiddenExtraction(navMenu);
+  // Each top-level entry (Shortcuts/Menu/Create) is a synthetic wrapper
+  // with no href of its own (see extractor.ts's buildTopLevelSection) —
+  // unlike a nested container, if hiding leaves one with zero children,
+  // render it as absent rather than as a dead-end flyout trigger.
+  const groups = filterHiddenExtraction(navMenu).filter(
+    (node) => node.type !== "container" || node.children.length > 0,
+  );
 
   const button = (await waitForElement(NAV_MENU_BUTTON_SELECTOR, { timeout: 10000 })) as HTMLElement;
   suppressNativeTooltip(button);
@@ -90,7 +57,5 @@ export async function runNavVerticalHover(): Promise<void> {
   const mountPoint = document.createElement("div");
   document.body.appendChild(mountPoint);
 
-  createRoot(mountPoint).render(
-    <RootMenu button={button} groups={buildTopLevelGroups(filteredNavMenu)} />,
-  );
+  createRoot(mountPoint).render(<RootMenu button={button} groups={groups} />);
 }

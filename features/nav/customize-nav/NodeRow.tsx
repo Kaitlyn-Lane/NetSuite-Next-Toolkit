@@ -6,10 +6,10 @@ import type { MenuNode } from "@/features/nav/build-menu/extractor";
 interface NodeRowProps {
   node: MenuNode;
   depth: number;
-  // Whether some ancestor above this node (a section or a container) is
-  // itself hidden. Purely a display concern: filterHiddenExtraction already
-  // treats a hidden ancestor as hiding this whole subtree at read time, so
-  // this only drives dimming + disabling the switch here — it must never be
+  // Whether some ancestor container above this node is itself hidden.
+  // Purely a display concern: filterHiddenExtraction already treats a
+  // hidden ancestor as hiding this whole subtree at read time, so this
+  // only drives dimming + disabling the switch here — it must never be
   // written as this node's own `hidden` flag.
   ancestorHidden: boolean;
   onToggle: (node: MenuNode, hidden: boolean) => void;
@@ -49,7 +49,10 @@ export function NodeRow({ node, depth, ancestorHidden, onToggle }: NodeRowProps)
         >
           <span className="cn-switch-indicator" />
         </Switch>
-        <span className="cn-row-label" title={node.href ?? undefined}>
+        <span
+          className={depth === 0 ? "cn-row-label cn-section-label" : "cn-row-label"}
+          title={node.href ?? undefined}
+        >
           {label}
         </span>
       </div>
