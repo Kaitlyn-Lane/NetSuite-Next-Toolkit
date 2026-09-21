@@ -39,9 +39,8 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
         change only applies to tabs opened or refreshed after you change it.
       </p>
       <div id="feature-list" class="feature-list"></div>
+      <div id="customize-nav-section"></div>
     </section>
-
-    <div id="customize-nav-section"></div>
 
     <section class="panel">
       <h2 class="section-label">Appearance</h2>

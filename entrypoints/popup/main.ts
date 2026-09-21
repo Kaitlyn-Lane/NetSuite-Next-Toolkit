@@ -20,12 +20,11 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
       <p id="status" class="status"></p>
     </section>
 
-    <div id="customize-nav-tile"></div>
-
     <section class="features-section">
       <h2 class="section-label">Features</h2>
       <div id="feature-flags" class="feature-list"></div>
       <p class="hint">Changes take effect after refreshing NetSuite tabs.</p>
+      <div id="customize-nav-tile"></div>
     </section>
 
     <section class="appearance-section">

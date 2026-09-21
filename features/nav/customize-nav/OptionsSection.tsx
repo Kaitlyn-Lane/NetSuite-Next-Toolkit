@@ -16,9 +16,13 @@ import { CustomizeNavTable } from "./CustomizeNavTable";
 // the description should stay readable either way. .cn-section-intro (in
 // styles.css) resets the uppercase/bold styling .section-label would
 // otherwise apply to it.
+//
+// No .panel class here (just .collapsible) — the container this mounts
+// into already lives inside the Features section's own .panel, so this
+// shouldn't draw a second nested card around itself.
 export function mountCustomizeNavSection(container: HTMLElement): void {
   container.innerHTML = `
-    <details id="${CUSTOMIZE_NAV_SECTION_ID}" class="collapsible panel">
+    <details id="${CUSTOMIZE_NAV_SECTION_ID}" class="collapsible">
       <summary class="section-label">
         Customize Nav
         <span class="cn-section-intro">
