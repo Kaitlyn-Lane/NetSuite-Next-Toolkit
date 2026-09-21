@@ -6,6 +6,7 @@ import {
   type BuildNavMenuResponse,
 } from "@/features/nav/build-menu/types/messages";
 import { FEATURE_FLAGS, getFeatureFlagState, setFeatureEnabled } from "@/core/feature-flags";
+import { mountThemeColorPicker } from "@/features/theme/popup-color-picker";
 
 document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
   <div class="popup">
@@ -22,6 +23,14 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
       <h2 class="section-label">Features</h2>
       <div id="feature-flags" class="feature-list"></div>
       <p class="hint">Changes take effect after refreshing NetSuite tabs.</p>
+    </section>
+
+    <section class="appearance-section">
+      <details class="collapsible">
+        <summary class="section-label">Appearance</summary>
+        <div id="theme-colors" class="theme-colors"></div>
+        <p class="hint">Changes take effect after refreshing NetSuite tabs.</p>
+      </details>
     </section>
 
     <footer class="popup-footer">
@@ -105,3 +114,4 @@ async function renderFeatureFlags(): Promise<void> {
 }
 
 void renderFeatureFlags();
+void mountThemeColorPicker(document.querySelector<HTMLDivElement>("#theme-colors")!);

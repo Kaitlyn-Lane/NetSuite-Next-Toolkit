@@ -37,6 +37,18 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
       </p>
       <div id="feature-list" class="feature-list"></div>
     </section>
+
+    <section class="panel">
+      <h2 class="section-label">Appearance</h2>
+      <p class="panel-intro">
+        Customize the colors used by the vertical hover nav (text,
+        background, and the hover/active accent) from the popup.
+      </p>
+      <div class="callout">
+        Color changes only apply to NetSuite tabs opened or refreshed after
+        you change them — same as feature toggles above.
+      </div>
+    </section>
   </div>
 `;
 
