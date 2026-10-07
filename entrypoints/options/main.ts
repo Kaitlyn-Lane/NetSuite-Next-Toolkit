@@ -53,6 +53,7 @@ async function renderFeatureCategories(): Promise<void> {
   const flagState = await getFeatureFlagState();
   const colorOverrideEnabled = await isCustomAppearanceEnabled();
   const verticalHoverFlag = FEATURE_FLAGS.find((flag) => flag.id === "verticalHoverNav")!;
+  const headerBannersFlag = FEATURE_FLAGS.find((flag) => flag.id === "headerBanners")!;
 
   container.innerHTML =
     featureCategoryHTML(
@@ -78,15 +79,25 @@ async function renderFeatureCategories(): Promise<void> {
     ) +
     featureCategoryHTML(
       "Appearance",
-      featureCardHTML({
-        id: COLOR_OVERRIDE_ID,
-        name: "Color Override",
-        description:
-          "Overwrite NetSuite's own colors — the omni-box search dropdown and the vertical hover nav — with colors you pick. The toggle is a one-click way to fall back to NetSuite's stock look without losing your picked colors.",
-        hasToggle: true,
-        hasDropdown: true,
-        toggleChecked: colorOverrideEnabled,
-      }),
+      [
+        featureCardHTML({
+          id: COLOR_OVERRIDE_ID,
+          name: "Color Override",
+          description:
+            "Overwrite NetSuite's own colors — the omni-box search dropdown and the vertical hover nav — with colors you pick. The toggle is a one-click way to fall back to NetSuite's stock look without losing your picked colors.",
+          hasToggle: true,
+          hasDropdown: true,
+          toggleChecked: colorOverrideEnabled,
+        }),
+        featureCardHTML({
+          id: headerBannersFlag.id,
+          name: headerBannersFlag.name,
+          description: headerBannersFlag.description,
+          hasToggle: true,
+          hasDropdown: false,
+          toggleChecked: flagState[headerBannersFlag.id],
+        }),
+      ].join(""),
     );
 
   wireFeatureCardToggle(verticalHoverFlag.id, (checked) => {
@@ -100,6 +111,10 @@ async function renderFeatureCategories(): Promise<void> {
   });
   wireFeatureCardExpand(COLOR_OVERRIDE_ID);
   void mountThemeColorPicker(document.getElementById(`feature-body-${COLOR_OVERRIDE_ID}`)!);
+
+  wireFeatureCardToggle(headerBannersFlag.id, (checked) => {
+    void setFeatureEnabled(headerBannersFlag.id, checked);
+  });
 
   // Runs only after the cards above exist in the DOM — generic, not
   // specific to Customize Nav: expands + focuses whichever feature card

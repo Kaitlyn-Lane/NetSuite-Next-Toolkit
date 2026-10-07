@@ -18,6 +18,13 @@ export const FEATURE_FLAGS: FeatureFlag[] = [
       "Replaces NetSuite's default nav menu with a hover flyout built from the scraped menu data.",
     defaultEnabled: true,
   },
+  {
+    id: "headerBanners",
+    name: "Header Banners",
+    description:
+      "Widens NetSuite's field-group header bars to full width with an ocean-tinted background.",
+    defaultEnabled: true,
+  },
 ];
 
 const STORAGE_KEY = "featureFlags";
