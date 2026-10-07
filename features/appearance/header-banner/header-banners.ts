@@ -17,7 +17,7 @@ export function applyHeaderBanners(): void {
   style.textContent = `
 .uir-field-group-title {
   width: 100% !important;
-  background: var(--ns-ui-token-light-ocean-150, #d6e4ea) !important;
+  background: var(--ns-ui-token-light-ocean-50, #d6e4ea) !important;
 }
 `;
   document.head.appendChild(style);
