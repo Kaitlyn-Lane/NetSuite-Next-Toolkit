@@ -4,13 +4,17 @@ import { NAV_MENU_BUTTON_SELECTOR } from "@/core/selectors";
 import { waitForElement } from "@/core/utils";
 import { filterHiddenExtraction } from "@/features/nav/customize-nav/filterHidden";
 import { getNavMenu } from "@/features/nav/storage";
-import {
-  applyThemeColors,
-  DEFAULT_THEME_COLORS,
-  isCustomAppearanceEnabled,
-  THEME_COLORS_STORAGE_KEY,
-  type ThemeColors,
-} from "@/features/appearance/color-override";
+// Importing these specific files directly, not the feature's own
+// index.ts barrel — that barrel also re-exports mountThemeColorPicker,
+// which pulls in the iro.js color-wheel library. A content script has to
+// be a single self-contained bundle (no shared-chunk splitting the way
+// options/popup page bundles get), so importing anything from a barrel
+// that touches iro.js bundles the whole library in here too, even though
+// this file never calls that function — confirmed by it showing up in
+// nav.js's build output before this was split out.
+import { isCustomAppearanceEnabled } from "@/features/appearance/color-override/appearance-toggle";
+import { applyThemeColors } from "@/features/appearance/color-override/apply-theme-colors";
+import { DEFAULT_THEME_COLORS, THEME_COLORS_STORAGE_KEY, type ThemeColors } from "@/features/appearance/color-override/types";
 
 import { RootMenu } from "./RootMenu";
 import "./styles.css";
