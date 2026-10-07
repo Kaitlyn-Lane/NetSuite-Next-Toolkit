@@ -5,26 +5,55 @@
    (.react-aria-*) are the library's own defaults, not ours.
 
    Background and active/selected-state colors use NetSuite's own
-   --ns-ui-omni-box-popup-* variables directly (not the --nst-flyout-*
-   custom-color-picker variables apply-theme-colors.ts sets) — a
-   deliberate choice to match NetSuite's native look here, so the picker
-   no longer controls these specific properties. Text color still goes
-   through --nst-flyout-text, since that wasn't part of this redesign. */
+   --ns-ui-omni-box-popup-* variables directly (not a separate
+   --nst-flyout-* custom-color system) — a deliberate choice to match
+   NetSuite's native look here, and ocean-shades.ts/overwrite-omni-box.ts
+   overwrite those same NetSuite tokens from the picker's colors, so this
+   file reads back exactly what got written, just indirectly. Text is a
+   fixed white (var(--nst-flyout-text, #fff) always falls through to its
+   fallback now — nothing sets that variable anymore, text isn't
+   user-configurable). */
 
 .react-aria-Popover {
-  /* Fallback is the real resolved value of --ns-ui-omni-box-popup-bg on
-     NetSuite's own page — the live var() reference doesn't resolve here,
-     almost certainly because NetSuite scopes it to its omni-box
-     component subtree rather than :root, and our Popover portals outside
-     that subtree (a direct child of <body>). Kept as the primary source
-     anyway in case that assumption's wrong or NetSuite's theme changes. */
-  background: var(--ns-ui-omni-box-popup-bg, linear-gradient(180deg, rgba(31, 58, 75, 0.96), rgba(0, 27, 44, 0.96)));
-  /* Frosted-glass effect on whatever's behind the popover — kept short of
-     fully opaque above so this still reads through the background. */
+  /* Fallback is NetSuite's own --ns-ui-token-light-ocean-150/-170 (its
+     native design-token scale, generated from and overwritten with the
+     picker's "Background" color by ocean-shades.ts) rather than a static
+     literal — the live --ns-ui-omni-box-popup-bg var() reference doesn't
+     resolve here, almost certainly because NetSuite scopes it to its
+     omni-box component subtree rather than :root, and our Popover
+     portals outside that subtree (a direct child of <body>). The nested
+     var()s' own literal fallbacks are the ocean scale's default
+     (unpicked) values, for the brief window before ocean-shades.ts has
+     run. 99% opacity is set on each stop itself, not the element's own
+     `opacity` property — element-level opacity blends the *already-
+     composited* element (background painted over the backdrop-filter's
+     blurred result) against the raw page, so the part that peeks
+     through is the sharp original, not the blur. Baking the alpha into
+     the background color instead means the gap IS the blurred backdrop.
+     Uses relative color syntax (rgb(from ...)) rather than color-mix
+     with the `transparent` keyword — color-mix interpolates toward
+     black at alpha 0, visibly shifting the hue/lightness; this instead
+     keeps the token's exact RGB channels and only changes alpha, so at
+     99% the color reads as true (negligible blend with the backdrop)
+     while still leaving a sliver of blurred backdrop visible. */
+  background: var(
+    --ns-ui-omni-box-popup-bg,
+    linear-gradient(
+      0deg,
+      rgb(from var(--ns-ui-token-light-ocean-150, #1f3a4b) r g b / 95%),
+      rgb(from var(--ns-ui-token-light-ocean-170, #101d26) r g b / 95%)
+    )
+  );
+  /* 20px averaged whatever's behind into an almost-flat tint rather than
+     visible-but-illegible texture — text at typical sizes is smaller
+     than that radius, so it gets smeared past recognizable shapes
+     entirely. A smaller radius keeps enough texture visible to read as
+     "blurred background," while still being well past legible. */
   backdrop-filter: blur(10px);
   color: var(--nst-flyout-text, #fff);
   min-width: 140px;
   z-index: 2147483647;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
   /* Entrance animation — react-aria-components supports plain CSS
      transitions for this (not just @keyframes): it applies the
      [data-entering] styles below on mount, then removes the attribute

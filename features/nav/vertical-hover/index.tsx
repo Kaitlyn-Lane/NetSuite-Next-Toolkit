@@ -4,6 +4,7 @@ import { NAV_MENU_BUTTON_SELECTOR } from "@/core/selectors";
 import { waitForElement } from "@/core/utils";
 import { filterHiddenExtraction } from "@/features/nav/customize-nav/filterHidden";
 import { getNavMenu } from "@/features/nav/storage";
+import { isCustomAppearanceEnabled } from "@/features/theme/appearance-toggle";
 import { applyThemeColors } from "@/features/theme/apply-theme-colors";
 import { DEFAULT_THEME_COLORS, THEME_COLORS_STORAGE_KEY, type ThemeColors } from "@/features/theme/types";
 
@@ -58,7 +59,13 @@ export async function runNavVerticalHover(): Promise<void> {
   const groups = filterHiddenExtraction(navMenu).filter(
     (node) => node.type !== "container" || node.children.length > 0,
   );
-  applyThemeColors(themeColors);
+  // One-click opt-out of overwriting NetSuite's own look (see
+  // appearance-toggle.ts) — skipping this call entirely leaves every
+  // --ns-ui-* token untouched, so the nav and NetSuite's native omni-box
+  // both read as stock NetSuite.
+  if (await isCustomAppearanceEnabled()) {
+    applyThemeColors(themeColors);
+  }
 
   const button = (await waitForElement(NAV_MENU_BUTTON_SELECTOR, { timeout: 10000 })) as HTMLElement;
   suppressNativeTooltip(button);

@@ -45,9 +45,11 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
     <section class="panel">
       <h2 class="section-label">Appearance</h2>
       <p class="panel-intro">
-        Customize the colors used by the vertical hover nav (text,
-        background, and the hover/active accent) — also available from the
-        popup.
+        Customize the colors used by the vertical hover nav (background and
+        the hover/active accent) and NetSuite's own omni-box search
+        dropdown — also available from the popup. The "Custom styling"
+        switch is a one-click way to turn this off and leave both looking
+        like stock NetSuite again, without losing your picked colors.
       </p>
       <div id="theme-colors" class="theme-colors"></div>
       <div class="callout">
