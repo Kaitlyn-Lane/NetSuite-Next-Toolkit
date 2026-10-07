@@ -1,0 +1,52 @@
+/* Styling for what record-browser renders into its feature card's
+   dropdown body (core/feature-card.ts owns the card's own chrome).
+   Shared primitives — --nst-* variables, .btn — come from
+   core/theme.css, already loaded by whichever page mounts this; the tree
+   itself is styled by react-json-view-lite's own stylesheet, imported in
+   RecordBrowser.tsx. */
+
+.rb-root {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.rb-root .btn-primary {
+  width: 100%;
+}
+
+.rb-status,
+.rb-note {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--nst-text-muted);
+}
+
+.rb-search {
+  font: inherit;
+  font-size: 12.5px;
+  padding: 6px 8px;
+  border: 1px solid var(--nst-border);
+  border-radius: 6px;
+  background: var(--nst-surface);
+  color: var(--nst-text);
+}
+
+/* Records routinely have hundreds of body fields — keep the tree in its
+   own scroll box rather than stretching the popup. The library's own
+   container class sets a background; overflow-wrap keeps long values
+   (addresses, URLs) from forcing horizontal scroll in a 300px popup. */
+.rb-tree {
+  max-height: 360px;
+  overflow: auto;
+  font-size: 11.5px;
+  border: 1px solid var(--nst-border);
+  border-radius: 6px;
+  overflow-wrap: anywhere;
+}
+
+.rb-source {
+  font-size: 12px;
+  color: var(--nst-accent);
+}

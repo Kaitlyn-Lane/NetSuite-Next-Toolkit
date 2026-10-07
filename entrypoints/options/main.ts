@@ -5,6 +5,7 @@ import { featureCardHTML, featureCategoryHTML, wireFeatureCardExpand, wireFeatur
 import { expandSectionFromUrl } from "@/core/section-params";
 import { CUSTOMIZE_NAV_SECTION_ID, mountCustomizeNavSection } from "@/features/nav/customize-nav";
 import { isCustomAppearanceEnabled, mountThemeColorPicker, setCustomAppearanceEnabled } from "@/features/appearance/color-override";
+import { mountRecordBrowserOptionsNote, RECORD_BROWSER_SECTION_ID } from "@/features/developer-tools/record-browser";
 
 const COLOR_OVERRIDE_ID = "colorOverride";
 
@@ -44,8 +45,9 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
 // Customize Nav: dropdown only, since there's no simple on/off, just
 // config) and Appearance (Color Override: both — the toggle is on/off,
 // the dropdown reveals the actual color fields, independent of whether
-// that toggle is on). core/feature-card.ts owns the shared card/category
-// chrome; this only decides what goes in which category and wires each
+// that toggle is on) and Developer Tools (Record Browser: dropdown only —
+// a user-initiated action, nothing to toggle). core/feature-card.ts owns
+// the shared card/category chrome; this only decides what goes in which category and wires each
 // card's specific behavior.
 async function renderFeatureCategories(): Promise<void> {
   const container = document.querySelector<HTMLDivElement>("#feature-categories")!;
@@ -97,6 +99,17 @@ async function renderFeatureCategories(): Promise<void> {
           toggleChecked: flagState[headerBannersFlag.id],
         }),
       ].join(""),
+    ) +
+    featureCategoryHTML(
+      "Developer Tools",
+      featureCardHTML({
+        id: RECORD_BROWSER_SECTION_ID,
+        name: "Record Browser",
+        description:
+          "View the current record as a searchable JSON tree — every body field and sublist line, built from NetSuite's own XML view of the record.",
+        hasToggle: false,
+        hasDropdown: true,
+      }),
     );
 
   wireFeatureCardToggle(verticalHoverFlag.id, (checked) => {
@@ -114,6 +127,9 @@ async function renderFeatureCategories(): Promise<void> {
   wireFeatureCardToggle(headerBannersFlag.id, (checked) => {
     void setFeatureEnabled(headerBannersFlag.id, checked);
   });
+
+  wireFeatureCardExpand(RECORD_BROWSER_SECTION_ID);
+  mountRecordBrowserOptionsNote(document.getElementById(`feature-body-${RECORD_BROWSER_SECTION_ID}`)!);
 
   // Runs only after the cards above exist in the DOM — generic, not
   // specific to Customize Nav: expands + focuses whichever feature card
