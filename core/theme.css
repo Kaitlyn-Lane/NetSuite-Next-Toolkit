@@ -379,27 +379,6 @@ body {
   padding-top: 4px;
 }
 
-.theme-preview {
-  display: flex;
-  flex-direction: column;
-  margin-top: 10px;
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.preview-item {
-  padding: 6px 12px;
-  font-size: 12px;
-  background: var(--nst-flyout-bg);
-  /* Fixed — text is no longer a user-configurable color. */
-  color: #fff;
-  border: 1px solid var(--nst-flyout-accent);
-}
-
-.preview-item.preview-hover {
-  background: color-mix(in srgb, var(--nst-flyout-accent) 50%, var(--nst-flyout-bg));
-}
-
 .theme-restore {
   align-self: flex-start;
   padding: 6px 0;

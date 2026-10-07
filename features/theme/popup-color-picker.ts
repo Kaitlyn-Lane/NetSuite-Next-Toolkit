@@ -54,15 +54,10 @@ export async function mountThemeColorPicker(container: HTMLElement): Promise<voi
       `,
     ).join("")}
     <div id="wheel-panel" class="wheel-panel" hidden></div>
-    <div id="theme-preview" class="theme-preview">
-      <div class="preview-item">Normal</div>
-      <div class="preview-item preview-hover">Hover / Active</div>
-    </div>
     <button type="button" class="btn btn-link theme-restore" id="restore-defaults">Restore defaults</button>
   `;
 
   const wheelPanel = container.querySelector<HTMLDivElement>("#wheel-panel")!;
-  const preview = container.querySelector<HTMLDivElement>("#theme-preview")!;
   const restoreButton = container.querySelector<HTMLButtonElement>("#restore-defaults")!;
   const colorPicker = iro.ColorPicker(wheelPanel, { width: 140, color: colors[DEFAULT_FIELD_KEY] });
 
@@ -80,22 +75,15 @@ export async function mountThemeColorPicker(container: HTMLElement): Promise<voi
     colorPicker.color.hexString = colors[key];
   }
 
-  function updatePreview(): void {
-    preview.style.setProperty("--nst-flyout-bg", colors.background);
-    preview.style.setProperty("--nst-flyout-accent", colors.accent);
-  }
-
   // Shared by the wheel's input:end and the hex inputs, so both paths
-  // update the swatch/hex-field/preview the same way and persist once.
+  // update the swatch/hex-field the same way and persist once.
   function commitColor(key: keyof ThemeColors, hex: string): void {
     colors[key] = hex;
     container.querySelector<HTMLButtonElement>(`#swatch-${key}`)!.style.background = hex;
     container.querySelector<HTMLInputElement>(`#hex-${key}`)!.value = hex;
-    updatePreview();
     void chrome.storage.local.set({ [THEME_COLORS_STORAGE_KEY]: colors });
   }
 
-  updatePreview();
   setActiveField(activeKey);
 
   restoreButton.addEventListener("click", () => {
@@ -104,7 +92,6 @@ export async function mountThemeColorPicker(container: HTMLElement): Promise<voi
       container.querySelector<HTMLButtonElement>(`#swatch-${field.key}`)!.style.background = colors[field.key];
       container.querySelector<HTMLInputElement>(`#hex-${field.key}`)!.value = colors[field.key];
     }
-    updatePreview();
     colorPicker.color.hexString = colors[activeKey];
     void chrome.storage.local.set({ [THEME_COLORS_STORAGE_KEY]: colors });
   });
