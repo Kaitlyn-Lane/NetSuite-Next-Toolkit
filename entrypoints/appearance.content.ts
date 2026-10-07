@@ -1,7 +1,7 @@
 import { isFeatureEnabled } from "@/core/feature-flags";
 import { NETSUITE_MATCHES } from "@/core/matches";
 import { safeInit } from "@/core/safe-init";
-import { applyHeaderBanners } from "@/features/theme/header-banners";
+import { applyHeaderBanners } from "@/features/appearance/header-banner";
 
 // Separate entrypoint from nav.content.ts for the same reason
 // nav-keybindings.content.ts is: allFrames: true. NetSuite Next's record

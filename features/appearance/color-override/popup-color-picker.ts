@@ -17,7 +17,7 @@ const DEFAULT_FIELD_KEY: keyof ThemeColors = "background";
 
 // Mounts into the "Color Override" feature card's dropdown body
 // (core/feature-card.ts owns the card chrome, including that feature's
-// on/off toggle — features/theme/appearance-toggle.ts — which is wired
+// on/off toggle — ./appearance-toggle.ts — which is wired
 // by the entrypoint directly, not here; this only ever renders the color
 // fields themselves, visible/editable regardless of whether that toggle
 // is on). One shared iro.js instance reused across both fields, rather

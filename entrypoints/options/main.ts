@@ -4,8 +4,7 @@ import { FEATURE_FLAGS, getFeatureFlagState, setFeatureEnabled } from "@/core/fe
 import { featureCardHTML, featureCategoryHTML, wireFeatureCardExpand, wireFeatureCardToggle } from "@/core/feature-card";
 import { expandSectionFromUrl } from "@/core/section-params";
 import { CUSTOMIZE_NAV_SECTION_ID, mountCustomizeNavSection } from "@/features/nav/customize-nav";
-import { isCustomAppearanceEnabled, setCustomAppearanceEnabled } from "@/features/theme/appearance-toggle";
-import { mountThemeColorPicker } from "@/features/theme/popup-color-picker";
+import { isCustomAppearanceEnabled, mountThemeColorPicker, setCustomAppearanceEnabled } from "@/features/appearance/color-override";
 
 const COLOR_OVERRIDE_ID = "colorOverride";
 

@@ -6,8 +6,8 @@
 // #feature-body-<id> afterward — a React tree, more form fields,
 // whatever; this module only owns the chrome around it, never the
 // content itself). Different features source their on/off state from
-// different places (core/feature-flags.ts, features/theme/
-// appearance-toggle.ts, ...) — this module never reads/writes storage
+// different places (core/feature-flags.ts, features/appearance/
+// color-override/appearance-toggle.ts, ...) — this module never reads/writes storage
 // itself, callers wire that through wireFeatureCardToggle's onChange.
 export interface FeatureCardSpec {
   id: string;

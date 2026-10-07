@@ -4,9 +4,13 @@ import { NAV_MENU_BUTTON_SELECTOR } from "@/core/selectors";
 import { waitForElement } from "@/core/utils";
 import { filterHiddenExtraction } from "@/features/nav/customize-nav/filterHidden";
 import { getNavMenu } from "@/features/nav/storage";
-import { isCustomAppearanceEnabled } from "@/features/theme/appearance-toggle";
-import { applyThemeColors } from "@/features/theme/apply-theme-colors";
-import { DEFAULT_THEME_COLORS, THEME_COLORS_STORAGE_KEY, type ThemeColors } from "@/features/theme/types";
+import {
+  applyThemeColors,
+  DEFAULT_THEME_COLORS,
+  isCustomAppearanceEnabled,
+  THEME_COLORS_STORAGE_KEY,
+  type ThemeColors,
+} from "@/features/appearance/color-override";
 
 import { RootMenu } from "./RootMenu";
 import "./styles.css";
