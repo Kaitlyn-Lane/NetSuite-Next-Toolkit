@@ -3,7 +3,7 @@ import { Switch } from "react-aria-components";
 
 import { filterToKeyBound, KeyBindingSelect } from "@/features/nav/keybindings";
 import type { KeyBinding, KeyBindingMap } from "@/features/nav/keybindings";
-import type { MenuNode } from "@/features/nav/types";
+import type { MenuContainerNode, MenuNode } from "@/features/nav/types";
 
 interface NodeRowProps {
   node: MenuNode;
@@ -15,6 +15,7 @@ interface NodeRowProps {
   // written as this node's own `hidden` flag.
   ancestorHidden: boolean;
   onToggle: (node: MenuNode, hidden: boolean) => void;
+  onToggleAutoExpand: (node: MenuContainerNode, autoExpanded: boolean) => void;
   keyBindingMap: KeyBindingMap;
   onAssignKeyBinding: (href: string, binding: KeyBinding | undefined) => void;
   showOnlyKeyBound: boolean;
@@ -25,6 +26,7 @@ export function NodeRow({
   depth,
   ancestorHidden,
   onToggle,
+  onToggleAutoExpand,
   keyBindingMap,
   onAssignKeyBinding,
   showOnlyKeyBound,
@@ -57,7 +59,8 @@ export function NodeRow({
     if (
       target.closest(".switch") ||
       target.closest(".cn-expand-btn") ||
-      target.closest(".cn-keybinding-select")
+      target.closest(".cn-keybinding-select") ||
+      target.closest(".cn-autoexpand")
     ) {
       return;
     }
@@ -102,6 +105,23 @@ export function NodeRow({
         >
           {label}
         </span>
+        {node.type === "container" && hasChildren && (
+          <label
+            className="cn-autoexpand"
+            title="Show this section's items inline in the nav instead of needing a hover to reveal them"
+          >
+            <Switch
+              className="switch"
+              isSelected={node.autoExpanded === true}
+              isDisabled={ancestorHidden}
+              onChange={(selected) => onToggleAutoExpand(node, selected)}
+              aria-label={`Auto-expand "${label}" in nav`}
+            >
+              <span className="switch-track" />
+            </Switch>
+            <span className="cn-autoexpand-label">Auto-expand</span>
+          </label>
+        )}
         {href && (
           <KeyBindingSelect currentBinding={currentBinding} onChange={(binding) => onAssignKeyBinding(href, binding)} />
         )}
@@ -115,6 +135,7 @@ export function NodeRow({
               depth={depth + 1}
               ancestorHidden={effectivelyHidden}
               onToggle={onToggle}
+              onToggleAutoExpand={onToggleAutoExpand}
               keyBindingMap={keyBindingMap}
               onAssignKeyBinding={onAssignKeyBinding}
               showOnlyKeyBound={showOnlyKeyBound}

@@ -13,6 +13,15 @@ why it's a genuinely separate concern (its own storage key, its own
 immediate-save behavior, no Save-button batching) rather than another field
 alongside `hidden`.
 
+Also lets the user flag any container (with children) as "Auto-expand" —
+unlike `hidden`/keybindings, this one *is* just another field alongside
+`hidden` (`MenuNode.autoExpanded`, same storage/Save-button batching), since
+it's purely about how `vertical-hover` renders that one container, not a
+separate concern with its own lifecycle. `build-menu`'s `extractNav()`
+defaults the top-level "Menu" section to `autoExpanded: true` on every fresh
+scrape (subject to the same known limitation below); every other node
+defaults to unset/false.
+
 ## Storage design
 
 `NavExtraction` (in `features/nav/types.ts`, shared by every nav
@@ -28,8 +37,10 @@ Save, writes the whole tree back via `features/nav/storage.ts`'s
 `build-menu` and `vertical-hover` also read/write through that same module.
 
 **Known, accepted limitation**: re-running "Create Menu Nav" overwrites
-`navMenu` wholesale with a fresh scrape, which has no `hidden` flags set —
-so today, a rebuild silently clears all hidden preferences. Preserving them
+`navMenu` wholesale with a fresh scrape, which has no `hidden` flags set
+(and resets `autoExpanded` back to extractNav()'s own defaults, i.e. just
+"Menu") — so today, a rebuild silently clears all hidden/auto-expand
+preferences. Preserving them
 across a rebuild (e.g. snapshotting the old tree, re-pairing hidden state
 back onto the new one by matching content) was discussed and intentionally
 left out of scope for now, not overlooked.
@@ -67,6 +78,11 @@ left out of scope for now, not overlooked.
   with an `href` (there's nothing to bind otherwise), right-aligned; a
   click landing on it is excluded from the row's own click-to-toggle
   handler the same way clicks on the switch and the expand button are.
+  Same for the "Auto-expand" switch, rendered for any container with
+  children (leaves and childless containers have nothing to expand) —
+  toggles that node's own `autoExpanded` directly, no cascading logic
+  like `hidden`'s, since a descendant's own auto-expand setting is
+  independent of whatever its ancestors are doing.
 - `PopupTile.ts` — `mountCustomizeNavTile(container)`, a small vanilla
   (non-React) card in the popup that links to the options page's section.
   The popup is too narrow for the tree itself (arbitrary depth, a switch

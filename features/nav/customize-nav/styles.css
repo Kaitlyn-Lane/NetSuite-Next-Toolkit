@@ -171,6 +171,25 @@
   font-size: 13px;
 }
 
+/* Only rendered for a container with children — leaves and childless
+   containers have nothing to expand. Right-aligned, same as
+   .cn-keybinding-select below; if both appear on the same row (a
+   container that also happens to have an href), this one sits first and
+   pushes both right together. */
+.cn-autoexpand {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.cn-autoexpand-label {
+  font-size: 11px;
+  color: var(--nst-text-muted);
+}
+
 /* features/nav/keybindings' per-row KeyBindingSelect — only rendered for a
    node that has an href. Right-aligned regardless of label length, so the
    column stays visually consistent down the tree. */

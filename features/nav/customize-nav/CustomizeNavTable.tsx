@@ -4,7 +4,7 @@ import { Button, Switch } from "react-aria-components";
 import { clearBindingForHref, filterToKeyBound, getKeyBindingMap, setKeyBinding } from "@/features/nav/keybindings";
 import type { KeyBinding, KeyBindingMap } from "@/features/nav/keybindings";
 import { getNavMenu, setNavMenu } from "@/features/nav/storage";
-import type { MenuNode, NavExtraction } from "@/features/nav/types";
+import type { MenuContainerNode, MenuNode, NavExtraction } from "@/features/nav/types";
 
 import { NodeRow } from "./NodeRow";
 import "./styles.css";
@@ -62,6 +62,15 @@ export function CustomizeNavTable() {
   // toggle, since each write persists the whole tree.
   const handleToggleNode = useCallback((node: MenuNode, hidden: boolean) => {
     node.hidden = hidden;
+    setNavMenuState((prev) => (prev ? [...prev] : prev));
+    setDirty(true);
+    setSaveStatus("");
+  }, []);
+
+  // Same in-place-mutation/dirty-flagging pattern as handleToggleNode
+  // above — see that one's comment for why.
+  const handleToggleAutoExpand = useCallback((node: MenuContainerNode, autoExpanded: boolean) => {
+    node.autoExpanded = autoExpanded;
     setNavMenuState((prev) => (prev ? [...prev] : prev));
     setDirty(true);
     setSaveStatus("");
@@ -131,6 +140,7 @@ export function CustomizeNavTable() {
             depth={0}
             ancestorHidden={false}
             onToggle={handleToggleNode}
+            onToggleAutoExpand={handleToggleAutoExpand}
             keyBindingMap={keyBindingMap}
             onAssignKeyBinding={handleAssignKeyBinding}
             showOnlyKeyBound={showOnlyKeyBound}

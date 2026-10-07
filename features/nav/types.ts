@@ -12,6 +12,13 @@ export interface MenuContainerNode {
   // Set by features/nav/customize-nav, not by extraction — omitted (not
   // false) means visible. Hiding a container hides everything under it.
   hidden?: boolean;
+  // Set by features/nav/customize-nav (defaulted to true for the
+  // top-level "Menu" section by build-menu's extractNav(), false/omitted
+  // for everything else) — vertical-hover renders an autoExpanded
+  // container's children inline, right after its own row, instead of as
+  // a hover-triggered submenu. Leaf nodes have nothing to expand, so this
+  // only exists on containers.
+  autoExpanded?: boolean;
 }
 
 export interface MenuLeafNode {

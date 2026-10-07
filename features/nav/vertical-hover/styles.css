@@ -1,15 +1,70 @@
-/* Vertical hover flyout menu. Black background, white text — placeholder
-   styling, real design comes later. Positioning (position/left/top) is
-   set inline by react-aria-components' Popover — this file only owns
-   visual appearance, not layout. Class names (.react-aria-*) are the
-   library's own defaults, not ours. */
+/* Vertical hover flyout menu, styled to mimic NetSuite's own omni-box
+   search results dropdown. Positioning (position/left/top) is set inline
+   by react-aria-components' Popover — this file only owns visual
+   appearance, not layout, except where noted below. Class names
+   (.react-aria-*) are the library's own defaults, not ours.
+
+   Background and active/selected-state colors use NetSuite's own
+   --ns-ui-omni-box-popup-* variables directly (not the --nst-flyout-*
+   custom-color-picker variables apply-theme-colors.ts sets) — a
+   deliberate choice to match NetSuite's native look here, so the picker
+   no longer controls these specific properties. Text color still goes
+   through --nst-flyout-text, since that wasn't part of this redesign. */
 
 .react-aria-Popover {
-  background: var(--nst-flyout-bg, #000);
+  /* Fallback is the real resolved value of --ns-ui-omni-box-popup-bg on
+     NetSuite's own page — the live var() reference doesn't resolve here,
+     almost certainly because NetSuite scopes it to its omni-box
+     component subtree rather than :root, and our Popover portals outside
+     that subtree (a direct child of <body>). Kept as the primary source
+     anyway in case that assumption's wrong or NetSuite's theme changes. */
+  background: var(--ns-ui-omni-box-popup-bg, linear-gradient(180deg, rgba(31, 58, 75, 0.96), rgba(0, 27, 44, 0.96)));
+  /* Frosted-glass effect on whatever's behind the popover — kept short of
+     fully opaque above so this still reads through the background. */
+  backdrop-filter: blur(10px);
   color: var(--nst-flyout-text, #fff);
-  border: 1px solid var(--nst-flyout-accent, #333);
   min-width: 140px;
   z-index: 2147483647;
+  /* Entrance animation — react-aria-components supports plain CSS
+     transitions for this (not just @keyframes): it applies the
+     [data-entering] styles below on mount, then removes the attribute
+     almost immediately, and this transition is what animates that
+     change back to the resting state. Kept soft/slow-ish (long duration,
+     ease-out) rather than snappy, per request. */
+  transition: transform 280ms ease-out, opacity 280ms ease-out;
+}
+
+.react-aria-Popover[data-entering] {
+  transform: translateY(14px);
+  opacity: 0;
+}
+
+/* Only the root menu (opened from the nav button, data-trigger
+   "MenuTrigger") pins to the left edge of the screen at a fixed width,
+   matching NetSuite's search bar — nested submenus (data-trigger
+   "SubmenuTrigger") keep flowing beside their parent item instead, since
+   they can't all be flush-left without overlapping. `left` is set
+   `!important` to win over the inline left/top Popover computes for
+   positioning relative to its trigger. */
+.react-aria-Popover[data-trigger="MenuTrigger"] {
+  left: 0 !important;
+  width: 191.4px;
+}
+
+/* ...except once it contains any auto-expanded (now inline, so
+   potentially wider/deeper) content — .nst-indented is the marker
+   MenuItem.tsx puts on exactly that content. The extra :has() makes this
+   more specific than the plain rule above regardless of source order,
+   but kept directly after it for readability. `fit-content` is an
+   intrinsic-sizing keyword, not a valid argument to max()/min()/calc()
+   — `max(191.4px, fit-content)` is invalid CSS and gets silently
+   dropped, which is why this never actually widened. `width: fit-
+   content` plus a separate `min-width` is the valid equivalent: never
+   narrower than the search-bar width, only wider if the content (now
+   indented up to arbitrary depth) actually needs it. */
+.react-aria-Popover[data-trigger="MenuTrigger"]:has(.nst-indented) {
+  width: fit-content;
+  min-width: 191.4px;
 }
 
 .react-aria-Menu {
@@ -21,11 +76,19 @@
 
 .react-aria-MenuItem {
   display: block;
+  min-height: 10px;
   padding: 6px 16px;
   color: var(--nst-flyout-text, #fff);
   text-decoration: none;
   cursor: pointer;
   white-space: nowrap;
+  /* Transparent by default so the active state's border-left-color below
+     doesn't shift layout when it appears. */
+  border-left: 5px solid transparent;
+  /* Subtle divider between items — same var()-with-fallback reasoning as
+     the other --ns-ui-omni-box-popup-* references above. */
+  border-bottom: 1px solid color-mix(in srgb, var(--ns-ui-omni-box-popup-text-color, #fff) 5%, transparent);
+  transition: transform 150ms ease, background-color 150ms ease, border-left-color 150ms ease;
 }
 
 /* MenuItem renders as <a> when it has an href, <div> otherwise —
@@ -42,24 +105,31 @@ a.react-aria-MenuItem {
   text-decoration: none;
 }
 
-/* Mixed with the background rather than used at full strength, so a dark
-   accent on a light background doesn't wash out dark/black text — and so
-   this still works sensibly for the opposite (light accent, dark
-   background) case, since it interpolates toward whichever bg is set
-   instead of assuming black or white. */
-.react-aria-MenuItem[data-focused],
+/* Hover lift — a small upward slide, not just a color change. */
 .react-aria-MenuItem[data-hovered] {
-  background: color-mix(in srgb, var(--nst-flyout-accent, #333) 50%, var(--nst-flyout-bg, #000));
+  transform: translateY(-2px);
 }
 
-/* Path highlight: keep a trigger visually active while its own submenu
-   is open, even after the mouse has moved on to a deeper layer and this
-   item is no longer directly hovered. Intentionally the same background
-   as the hover state above (kept as its own rule in case they need to
-   diverge again) — a stronger accent mix here read fine on a dark
-   background, but got too dark for black text on a light background. */
+/* Active/selected state: covers hover, keyboard focus, and path-highlight
+   (data-open — a trigger whose own submenu is open, even after the mouse
+   has moved on to a deeper layer) with NetSuite's own active-state
+   variables, same as its native search results list. */
+.react-aria-MenuItem[data-focused],
+.react-aria-MenuItem[data-hovered],
 .react-aria-MenuItem[data-open] {
-  background: color-mix(in srgb, var(--nst-flyout-accent, #222) 50%, var(--nst-flyout-bg, #000));
+  /* Same var()-with-fallback reasoning as .react-aria-Popover above. */
+  background: var(--ns-ui-omni-box-popup-bg-active, rgba(85, 72, 40, 0.95));
+  border-left-color: var(--ns-ui-omni-box-popup-border-color-active, #f0cc72);
+}
+
+/* Items under an auto-expanded container (MenuItem.tsx's `indentLevel`
+   prop) — nudged in to show the hierarchy that a separate flyout panel
+   would otherwise have conveyed. The actual amount scales with nesting
+   depth, so it's set inline per-item by MenuItem.tsx rather than here;
+   this class exists so :has(.nst-indented) above can detect indented
+   content, and as a fallback if the inline style is ever stripped. */
+.react-aria-MenuItem.nst-indented {
+  padding-left: 28px;
 }
 
 /* Force white text regardless of link state — NetSuite's own page CSS

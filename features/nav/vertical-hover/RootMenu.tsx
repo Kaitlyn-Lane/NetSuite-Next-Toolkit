@@ -26,7 +26,7 @@ export function RootMenu({ button, groups }: { button: HTMLElement; groups: Menu
   return (
     <MenuTrigger isOpen={isOpen} onOpenChange={setIsOpen}>
       <Button style={{ display: "none" }} aria-hidden="true" />
-      <Popover triggerRef={triggerRef} placement="top start">
+      <Popover triggerRef={triggerRef} placement="top start" offset={0}>
         <Menu>
           {groups.map((node, i) => (
             <MenuItem key={i} node={node} />

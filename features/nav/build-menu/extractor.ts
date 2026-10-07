@@ -119,7 +119,18 @@ export function extractNav(): NavExtraction {
   const { shortcuts, create } = splitShortcutsAndCreate(extractShortcutAndCreateSections());
   return [
     buildTopLevelSection('Shortcuts', shortcuts),
-    { type: 'container', label: 'Menu', automationType: null, href: null, children: extractMenu() },
+    {
+      type: 'container',
+      label: 'Menu',
+      automationType: null,
+      href: null,
+      children: extractMenu(),
+      // Default for a fresh scrape — customize-nav can turn it back off
+      // per the same known limitation noted in its README: re-running
+      // "Create Menu Nav" overwrites the tree wholesale, so this (like
+      // `hidden`) resets to the default on every rebuild.
+      autoExpanded: true,
+    },
     buildTopLevelSection('Create', create),
   ];
 }
