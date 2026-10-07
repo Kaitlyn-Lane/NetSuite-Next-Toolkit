@@ -83,50 +83,42 @@ left out of scope for now, not overlooked.
   toggles that node's own `autoExpanded` directly, no cascading logic
   like `hidden`'s, since a descendant's own auto-expand setting is
   independent of whatever its ancestors are doing.
-- `PopupTile.ts` — `mountCustomizeNavTile(container)`, a small vanilla
-  (non-React) card in the popup that links to the options page's section.
-  The popup is too narrow for the tree itself (arbitrary depth, a switch
-  per row), so it doesn't try. Opens via `chrome.tabs.create` with a
-  `?section=customize-nav` URL param (not `chrome.runtime.openOptionsPage()`,
+- `PopupTile.ts` — `mountCustomizeNavPopupBody(container)`, a small
+  vanilla (non-React) note + link-out button, mounted into the "Customize
+  Nav" feature card's dropdown body (see `core/feature-card.ts`) on the
+  popup. The popup is too narrow for the tree itself (arbitrary depth, a
+  switch per row), so it doesn't try. Opens via `chrome.tabs.create` with
+  a `?section=customizeNav` URL param (not `chrome.runtime.openOptionsPage()`,
   which has no way to pass one) — also exports `CUSTOMIZE_NAV_SECTION_ID`,
-  the id shared with `OptionsSection.tsx` so the two always agree on the
-  same string.
-- `OptionsSection.tsx` — `mountCustomizeNavSection(container)`, builds the
-  whole collapsible `<details id="customize-nav" class="collapsible
-  cn-nested-section">` section (matching the popup's own `.collapsible`
-  pattern) and mounts `CustomizeNavTable` inside it — nested inside the
-  options page's Features panel (see `entrypoints/options/main.ts`), not
-  its own top-level `.panel`, but `.cn-nested-section` (`styles.css`) gives
-  it a `.feature-card`-style box of its own anyway, so it visually matches
-  Vertical Hover Nav's own row in the toggle list above rather than reading
-  as a different kind of UI. The description lives inside `<summary>` itself (`.cn-section-intro`
-  in `styles.css` undoes the uppercase/bold `.section-label` styling it'd
-  otherwise inherit there), not as a sibling after it, since a native
-  `<details>` hides everything after `<summary>` while collapsed and the
-  description should stay readable either way. Collapsed by default;
-  `core/section-params.ts`'s `expandSectionFromUrl()` (called generically
-  from `entrypoints/options/main.ts`, not specific to this section) opens
-  and focuses it when arriving via the popup tile's URL param. This is the
-  one place `entrypoints/options/main.ts` (otherwise plain vanilla TS)
-  pulls in React — kept self-contained here so `main.ts` never needs JSX.
-  There's no "Create Menu Nav" trigger on this page — the options page
-  isn't a NetSuite tab, so that action would have nothing to scrape;
-  `CustomizeNavTable`'s empty state instead points back at the
-  "Instructions" panel above.
+  the id shared with `OptionsSection.tsx` (and with the feature card's own
+  id on the options page) so all three always agree on the same string.
+- `OptionsSection.tsx` — `mountCustomizeNavSection(container)`, just
+  mounts `CustomizeNavTable` into whatever container it's given. On the
+  options page that container is the "Customize Nav" feature card's
+  dropdown body — `core/feature-card.ts` owns that card's own chrome
+  (name, description, the expand/collapse disclosure), not this file, so
+  there's nothing else for this one to build. `core/section-params.ts`'s
+  `expandSectionFromUrl()` (called generically from
+  `entrypoints/options/main.ts`, not specific to this card) expands and
+  focuses it when arriving via the popup's link-out `?section=` param.
+  This is the one place `entrypoints/options/main.ts` (otherwise plain
+  vanilla TS) pulls in React — kept self-contained here so `main.ts`
+  never needs JSX. There's no "Create Menu Nav" trigger on this page —
+  the options page isn't a NetSuite tab, so that action would have
+  nothing to scrape; `CustomizeNavTable`'s empty state instead points
+  back at the "Instructions" panel above.
 
 `index.ts` re-exports the above as this feature's public surface.
 
 Visual styling (the tree rows, switch, save row) reuses the shared
-`--nst-*` CSS variables and the `.switch`/`.switch-track`/`.btn`/
-`.collapsible` primitives from `core/theme.css`, rather than hand-rolling
-separate colors — see that file and `entrypoints/options/style.css`'s
-`.panel` for the surrounding chrome this tree renders inside of. Note:
-`react-aria-components`' `<Switch>` wraps its native input in its own
-extra hidden `<span>`, so it and `.switch-track` aren't DOM siblings —
-`core/theme.css`'s `.switch[data-selected]`/`[data-disabled]` rules (a
-descendant selector against the data attributes RAC puts on the outer
-`.switch` label) are what actually style it, not the `:checked ~` sibling
-rules that work for a hand-built `<span class="switch"><input/>...`
+`--nst-*` CSS variables and the `.switch`/`.switch-track`/`.btn`
+primitives from `core/theme.css`, rather than hand-rolling separate
+colors. Note: `react-aria-components`' `<Switch>` wraps its native input
+in its own extra hidden `<span>`, so it and `.switch-track` aren't DOM
+siblings — `core/theme.css`'s `.switch[data-selected]`/`[data-disabled]`
+rules (a descendant selector against the data attributes RAC puts on the
+outer `.switch` label) are what actually style it, not the `:checked ~`
+sibling rules that work for a hand-built `<span class="switch"><input/>...`
 elsewhere in the app.
 
 ## Data flow
@@ -139,9 +131,8 @@ the same key → next time `vertical-hover` runs (i.e. after a tab refresh),
 `filterHiddenExtraction` reads that tree and drops the flagged
 nodes/subtrees.
 
-Mounted from `entrypoints/popup/main.ts` (`mountCustomizeNavTile`, just a
-link out) and `entrypoints/options/main.ts` (`mountCustomizeNavSection`, the
-actual tree) — both entrypoints stay thin, importing only from this
-feature's `index.ts`. In both, it's nested inside the existing "Features"
-section/panel rather than a separate top-level one — it's a detail of the
-Vertical Hover Nav feature, not a feature of its own.
+Mounted from `entrypoints/popup/main.ts` and `entrypoints/options/main.ts`
+as the "Customize Nav" feature card under the Navigation category (see
+`core/feature-card.ts`) — a dropdown-only card, since there's no simple
+on/off here, just configuration. Both entrypoints stay thin, importing
+only from this feature's `index.ts`.

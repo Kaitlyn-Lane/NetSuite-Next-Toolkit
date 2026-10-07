@@ -168,23 +168,126 @@ body {
   cursor: not-allowed;
 }
 
-.collapsible summary {
+/* Feature cards: the shared shell every entry in the popup's and options
+   page's category lists uses (built by core/feature-card.ts). A category
+   is its own collapsible <details> (Navigation, Appearance, etc.), boxed
+   like .panel so the .feature-card entries inside (--nst-surface) still
+   read as a visually distinct, nested layer rather than blending in. */
+.feature-categories {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.feature-category {
+  background: var(--nst-bg);
+  border: 1px solid var(--nst-border);
+  border-radius: 10px;
+  padding: 12px 14px;
+}
+
+.feature-category-label {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--nst-text-muted);
   cursor: pointer;
   list-style: none;
 }
 
-.collapsible summary::-webkit-details-marker {
+.feature-category-label::-webkit-details-marker {
   display: none;
 }
 
-.collapsible summary::after {
+.feature-category-label::after {
   content: "›";
   float: right;
   transition: transform 150ms ease;
 }
 
-.collapsible[open] summary::after {
+.feature-category[open] > .feature-category-label::after {
   transform: rotate(90deg);
+}
+
+.feature-category-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.feature-card {
+  background: var(--nst-surface);
+  border: 1px solid var(--nst-border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.feature-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.feature-card-heading {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.flag-name {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.flag-desc {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--nst-text-muted);
+}
+
+/* Same chevron-button pattern as customize-nav's own row expand button
+   (features/nav/customize-nav/styles.css's .cn-expand-btn) — kept as a
+   separate rule here since this one applies to the outer feature-card
+   level, not a tree row, but intentionally identical in behavior. */
+.feature-expand-btn {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: var(--nst-text-muted);
+  font-size: 15px;
+  line-height: 1;
+  transition: transform 150ms ease;
+}
+
+.feature-expand-btn.expanded {
+  transform: rotate(90deg);
+}
+
+/* Keeps a toggle-only card's heading aligned with a dropdown-having
+   card's, even though it has no expand button of its own. */
+.feature-expand-spacer {
+  display: inline-block;
+  width: 18px;
+  flex-shrink: 0;
+}
+
+.feature-card-body {
+  margin-top: 6px;
+  padding-top: 10px;
+  border-top: 1px solid var(--nst-border);
 }
 
 .callout {
@@ -226,6 +329,14 @@ body {
   transition:
     background-color 120ms ease,
     box-shadow 120ms ease;
+}
+
+/* Rows otherwise butt flush against each other (the negative margin
+   above is just to expand the hover/active hit area past the padding,
+   not spacing) — this adds real breathing room between e.g. Background
+   and Accent, without adding trailing space after the last row. */
+.color-row + .color-row {
+  margin-top: 8px;
 }
 
 /* One field is always "active" (see popup-color-picker.ts) so it's

@@ -1,6 +1,5 @@
 import iro from "@jaames/iro";
 
-import { isCustomAppearanceEnabled, setCustomAppearanceEnabled } from "./appearance-toggle";
 import { DEFAULT_THEME_COLORS, THEME_COLORS_STORAGE_KEY, type ThemeColors } from "./types";
 
 interface ColorField {
@@ -16,63 +15,51 @@ const FIELDS: ColorField[] = [
 const HEX_PATTERN = /^#[0-9a-fA-F]{6}$/;
 const DEFAULT_FIELD_KEY: keyof ThemeColors = "background";
 
-// One shared iro.js instance reused across all three fields, rather than
-// three mounted canvases, to keep the popup's DOM footprint small.
+// Mounts into the "Color Override" feature card's dropdown body
+// (core/feature-card.ts owns the card chrome, including that feature's
+// on/off toggle — features/theme/appearance-toggle.ts — which is wired
+// by the entrypoint directly, not here; this only ever renders the color
+// fields themselves, visible/editable regardless of whether that toggle
+// is on). One shared iro.js instance reused across both fields, rather
+// than two mounted canvases, to keep the popup's DOM footprint small.
 export async function mountThemeColorPicker(container: HTMLElement): Promise<void> {
   const stored = await chrome.storage.local.get(THEME_COLORS_STORAGE_KEY);
   const colors: ThemeColors = {
     ...DEFAULT_THEME_COLORS,
     ...(stored[THEME_COLORS_STORAGE_KEY] as Partial<ThemeColors> | undefined),
   };
-  const customAppearanceEnabled = await isCustomAppearanceEnabled();
 
   container.innerHTML = `
-    <div class="color-row" id="row-custom-appearance-toggle">
-      <span class="flag-name">Custom styling</span>
-      <label class="switch">
-        <input type="checkbox" id="custom-appearance-toggle" ${customAppearanceEnabled ? "checked" : ""} />
-        <span class="switch-track"></span>
-      </label>
+    ${FIELDS.map(
+      (field) => `
+        <div class="color-row" id="row-${field.key}">
+          <span class="flag-name">${field.label}</span>
+          <input
+            type="text"
+            class="hex-input"
+            id="hex-${field.key}"
+            value="${colors[field.key]}"
+            maxlength="7"
+            spellcheck="false"
+            aria-label="${field.label} color hex value"
+          />
+          <button
+            type="button"
+            class="swatch"
+            id="swatch-${field.key}"
+            style="background:${colors[field.key]}"
+            aria-label="Choose ${field.label.toLowerCase()} color"
+          ></button>
+        </div>
+      `,
+    ).join("")}
+    <div id="wheel-panel" class="wheel-panel" hidden></div>
+    <div id="theme-preview" class="theme-preview">
+      <div class="preview-item">Normal</div>
+      <div class="preview-item preview-hover">Hover / Active</div>
     </div>
-    <div id="color-fields" ${customAppearanceEnabled ? "" : "hidden"}>
-      ${FIELDS.map(
-        (field) => `
-          <div class="color-row" id="row-${field.key}">
-            <span class="flag-name">${field.label}</span>
-            <input
-              type="text"
-              class="hex-input"
-              id="hex-${field.key}"
-              value="${colors[field.key]}"
-              maxlength="7"
-              spellcheck="false"
-              aria-label="${field.label} color hex value"
-            />
-            <button
-              type="button"
-              class="swatch"
-              id="swatch-${field.key}"
-              style="background:${colors[field.key]}"
-              aria-label="Choose ${field.label.toLowerCase()} color"
-            ></button>
-          </div>
-        `,
-      ).join("")}
-      <div id="wheel-panel" class="wheel-panel" hidden></div>
-      <div id="theme-preview" class="theme-preview">
-        <div class="preview-item">Normal</div>
-        <div class="preview-item preview-hover">Hover / Active</div>
-      </div>
-      <button type="button" class="btn btn-link theme-restore" id="restore-defaults">Restore defaults</button>
-    </div>
+    <button type="button" class="btn btn-link theme-restore" id="restore-defaults">Restore defaults</button>
   `;
-
-  const colorFields = container.querySelector<HTMLDivElement>("#color-fields")!;
-  const appearanceToggle = container.querySelector<HTMLInputElement>("#custom-appearance-toggle")!;
-  appearanceToggle.addEventListener("change", () => {
-    colorFields.hidden = !appearanceToggle.checked;
-    void setCustomAppearanceEnabled(appearanceToggle.checked);
-  });
 
   const wheelPanel = container.querySelector<HTMLDivElement>("#wheel-panel")!;
   const preview = container.querySelector<HTMLDivElement>("#theme-preview")!;

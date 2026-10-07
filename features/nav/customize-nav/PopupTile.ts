@@ -2,32 +2,32 @@ import { withSectionParam } from "@/core/section-params";
 
 import "./styles.css";
 
-// The id of the <details> section OptionsSection.tsx builds on the options
-// page — shared between the two so the popup's link and the options page's
-// section-to-expand always agree on the same string.
-export const CUSTOMIZE_NAV_SECTION_ID = "customize-nav";
+// The id of the feature card (core/feature-card.ts) OptionsSection.tsx's
+// tree mounts into on the options page — shared between the two so the
+// popup's link and the options page's card-to-expand always agree on the
+// same string.
+export const CUSTOMIZE_NAV_SECTION_ID = "customizeNav";
 
 // A narrow popup has no room for the tree itself (arbitrary depth, per-row
-// toggles) — this is just a link out to the options page's "Customize Nav"
-// section, styled like the rest of the popup's card-based sections (see
-// ./styles.css's .nav-tile rules — this is the popup's only importer of that
-// file, since CustomizeNavTable never mounts there). Opens via
-// chrome.tabs.create rather than chrome.runtime.openOptionsPage()
+// toggles) — this is the popup's version of the Customize Nav feature
+// card's dropdown body: just a link out to the options page's tree,
+// rather than the tree itself (see OptionsSection.tsx for that one).
+// Opens via chrome.tabs.create rather than chrome.runtime.openOptionsPage()
 // specifically so it can carry the ?section= param that expands and
-// focuses that section on arrival — openOptionsPage() has no way to pass a
+// focuses that card on arrival — openOptionsPage() has no way to pass a
 // URL.
-export function mountCustomizeNavTile(container: HTMLElement): void {
+export function mountCustomizeNavPopupBody(container: HTMLElement): void {
   container.innerHTML = `
-    <button type="button" id="customize-nav-tile" class="nav-tile">
-      <span class="nav-tile-text">
-        <span class="nav-tile-title">Customize Nav</span>
-        <span class="nav-tile-desc">Hide menu items and assign Alt+ shortcuts</span>
-      </span>
-      <span class="nav-tile-chevron" aria-hidden="true">›</span>
+    <p class="cn-popup-note">
+      The tree needs more room than the popup has — open it on the full
+      options page to hide items or assign shortcuts.
+    </p>
+    <button type="button" id="customize-nav-open-options" class="btn btn-link">
+      Open Customize Nav →
     </button>
   `;
 
-  container.querySelector<HTMLButtonElement>("#customize-nav-tile")!.addEventListener("click", () => {
+  container.querySelector<HTMLButtonElement>("#customize-nav-open-options")!.addEventListener("click", () => {
     const url = withSectionParam(chrome.runtime.getURL("options.html"), CUSTOMIZE_NAV_SECTION_ID);
     chrome.tabs.create({ url });
   });

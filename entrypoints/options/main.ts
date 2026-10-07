@@ -1,9 +1,13 @@
 import "@/core/theme.css";
 import "./style.css";
 import { FEATURE_FLAGS, getFeatureFlagState, setFeatureEnabled } from "@/core/feature-flags";
+import { featureCardHTML, featureCategoryHTML, wireFeatureCardExpand, wireFeatureCardToggle } from "@/core/feature-card";
 import { expandSectionFromUrl } from "@/core/section-params";
-import { mountCustomizeNavSection } from "@/features/nav/customize-nav";
+import { CUSTOMIZE_NAV_SECTION_ID, mountCustomizeNavSection } from "@/features/nav/customize-nav";
+import { isCustomAppearanceEnabled, setCustomAppearanceEnabled } from "@/features/theme/appearance-toggle";
 import { mountThemeColorPicker } from "@/features/theme/popup-color-picker";
+
+const COLOR_OVERRIDE_ID = "colorOverride";
 
 document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
   <div class="page">
@@ -32,67 +36,75 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
       </div>
     </section>
 
-    <section class="panel">
-      <h2 class="section-label">Features</h2>
-      <p class="panel-intro">
-        Toggle which features run automatically on NetSuite pages. A toggle
-        change only applies to tabs opened or refreshed after you change it.
-      </p>
-      <div id="feature-list" class="feature-list"></div>
-      <div id="customize-nav-section"></div>
-    </section>
-
-    <section class="panel">
-      <h2 class="section-label">Appearance</h2>
-      <p class="panel-intro">
-        Customize the colors used by the vertical hover nav (background and
-        the hover/active accent) and NetSuite's own omni-box search
-        dropdown — also available from the popup. The "Custom styling"
-        switch is a one-click way to turn this off and leave both looking
-        like stock NetSuite again, without losing your picked colors.
-      </p>
-      <div id="theme-colors" class="theme-colors"></div>
-      <div class="callout">
-        Color changes only apply to NetSuite tabs opened or refreshed after
-        you change them — same as feature toggles above.
-      </div>
-    </section>
+    <div id="feature-categories" class="feature-categories"></div>
   </div>
 `;
 
-const featureList = document.querySelector<HTMLDivElement>("#feature-list")!;
+// Everything in the popup/options pages is framed as a "feature" living
+// inside a category — Navigation (Vertical Hover Nav: toggle only;
+// Customize Nav: dropdown only, since there's no simple on/off, just
+// config) and Appearance (Color Override: both — the toggle is on/off,
+// the dropdown reveals the actual color fields, independent of whether
+// that toggle is on). core/feature-card.ts owns the shared card/category
+// chrome; this only decides what goes in which category and wires each
+// card's specific behavior.
+async function renderFeatureCategories(): Promise<void> {
+  const container = document.querySelector<HTMLDivElement>("#feature-categories")!;
+  const flagState = await getFeatureFlagState();
+  const colorOverrideEnabled = await isCustomAppearanceEnabled();
+  const verticalHoverFlag = FEATURE_FLAGS.find((flag) => flag.id === "verticalHoverNav")!;
 
-async function renderFeatureList(): Promise<void> {
-  const state = await getFeatureFlagState();
+  container.innerHTML =
+    featureCategoryHTML(
+      "Navigation",
+      [
+        featureCardHTML({
+          id: verticalHoverFlag.id,
+          name: verticalHoverFlag.name,
+          description: verticalHoverFlag.description,
+          hasToggle: true,
+          hasDropdown: false,
+          toggleChecked: flagState[verticalHoverFlag.id],
+        }),
+        featureCardHTML({
+          id: CUSTOMIZE_NAV_SECTION_ID,
+          name: "Customize Nav",
+          description:
+            "Hide any top-level layer, container, or link from the vertical hover nav (hiding a container hides everything nested under it), and bind any link to Alt+1–Alt+9 or Alt+0 to jump straight to it.",
+          hasToggle: false,
+          hasDropdown: true,
+        }),
+      ].join(""),
+    ) +
+    featureCategoryHTML(
+      "Appearance",
+      featureCardHTML({
+        id: COLOR_OVERRIDE_ID,
+        name: "Color Override",
+        description:
+          "Overwrite NetSuite's own colors — the omni-box search dropdown and the vertical hover nav — with colors you pick. The toggle is a one-click way to fall back to NetSuite's stock look without losing your picked colors.",
+        hasToggle: true,
+        hasDropdown: true,
+        toggleChecked: colorOverrideEnabled,
+      }),
+    );
 
-  featureList.innerHTML = FEATURE_FLAGS.map(
-    (flag) => `
-      <div class="feature-card">
-        <div class="feature-card-header">
-          <span class="flag-name">${flag.name}</span>
-          <label class="switch">
-            <input type="checkbox" id="flag-${flag.id}" ${state[flag.id] ? "checked" : ""} />
-            <span class="switch-track"></span>
-          </label>
-        </div>
-        <p class="flag-desc">${flag.description}</p>
-      </div>
-    `,
-  ).join("");
+  wireFeatureCardToggle(verticalHoverFlag.id, (checked) => {
+    void setFeatureEnabled(verticalHoverFlag.id, checked);
+  });
+  wireFeatureCardExpand(CUSTOMIZE_NAV_SECTION_ID);
+  mountCustomizeNavSection(document.getElementById(`feature-body-${CUSTOMIZE_NAV_SECTION_ID}`)!);
 
-  for (const flag of FEATURE_FLAGS) {
-    const checkbox = document.querySelector<HTMLInputElement>(`#flag-${flag.id}`)!;
-    checkbox.addEventListener("change", () => {
-      void setFeatureEnabled(flag.id, checkbox.checked);
-    });
-  }
+  wireFeatureCardToggle(COLOR_OVERRIDE_ID, (checked) => {
+    void setCustomAppearanceEnabled(checked);
+  });
+  wireFeatureCardExpand(COLOR_OVERRIDE_ID);
+  void mountThemeColorPicker(document.getElementById(`feature-body-${COLOR_OVERRIDE_ID}`)!);
+
+  // Runs only after the cards above exist in the DOM — generic, not
+  // specific to Customize Nav: expands + focuses whichever feature card
+  // matches this page's ?section= param, if any.
+  expandSectionFromUrl();
 }
 
-void renderFeatureList();
-void mountThemeColorPicker(document.querySelector<HTMLDivElement>("#theme-colors")!);
-mountCustomizeNavSection(document.querySelector<HTMLDivElement>("#customize-nav-section")!);
-
-// Runs after every section above exists in the DOM — generic, not specific
-// to Customize Nav: expands + focuses whichever <details id="..."> matches
-// this page's ?section= param, if any.
-expandSectionFromUrl();
+void renderFeatureCategories();

@@ -56,37 +56,3 @@ body {
   line-height: 1.5;
 }
 
-.feature-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.feature-card {
-  background: var(--nst-surface);
-  border: 1px solid var(--nst-border);
-  border-radius: 10px;
-  padding: 12px 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.feature-card-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.flag-name {
-  font-size: 14px;
-  font-weight: 600;
-}
-
-.flag-desc {
-  margin: 0;
-  font-size: 13px;
-  line-height: 1.45;
-  color: var(--nst-text-muted);
-}
