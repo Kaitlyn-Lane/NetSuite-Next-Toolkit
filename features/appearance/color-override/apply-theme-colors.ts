@@ -1,4 +1,5 @@
 import { applyOceanShades } from "./ocean-shades";
+import { applyHeaderStripeOverride } from "./overwrite-header-stripe";
 import { applyOmniBoxOverrides } from "./overwrite-omni-box";
 import type { ThemeColors } from "./types";
 
@@ -18,4 +19,7 @@ export function applyThemeColors(colors: ThemeColors): void {
   // Pushes the nav's own gradient/accent look onto NetSuite's native
   // omni-box search dropdown too (see overwrite-omni-box.ts).
   applyOmniBoxOverrides(colors);
+  // Tints NetSuite's header stripe image with ocean-150 (see
+  // overwrite-header-stripe.ts).
+  applyHeaderStripeOverride(colors);
 }
