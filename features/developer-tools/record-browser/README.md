@@ -17,7 +17,7 @@ The fetch-the-XML-and-reshape-it approach (and the shape above) comes from
 [michoelchaikin/netsuite-field-explorer](https://github.com/michoelchaikin/netsuite-field-explorer)
 (MIT). `parse-record.ts` and `filter-record.ts` are TypeScript
 reimplementations of its `formatRecord` and `filterRecord`; see
-`THIRD_PARTY_NOTICES.md` at the repo root for the license.
+`THIRD_PARTY_NOTICES.md` at the repo root.
 
 ## How it finds the URL
 
