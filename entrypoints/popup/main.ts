@@ -9,7 +9,7 @@ import { FEATURE_FLAGS, getFeatureFlagState, setFeatureEnabled } from "@/core/fe
 import { featureCardHTML, featureCategoryHTML, wireFeatureCardExpand, wireFeatureCardToggle } from "@/core/feature-card";
 import { CUSTOMIZE_NAV_SECTION_ID, mountCustomizeNavPopupBody } from "@/features/nav/customize-nav";
 import { isCustomAppearanceEnabled, mountThemeColorPicker, setCustomAppearanceEnabled } from "@/features/appearance/color-override";
-import { mountRecordBrowserPopupBody, RECORD_BROWSER_SECTION_ID } from "@/features/developer-tools/record-browser";
+import { mountRecordBrowserAction } from "@/features/developer-tools/record-browser";
 
 const COLOR_OVERRIDE_ID = "colorOverride";
 
@@ -19,13 +19,20 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
       <h1>NetSuite Next Toolkit</h1>
     </header>
 
-    <section class="action-section">
-      <button id="create-nav-menu-btn" type="button" class="btn btn-primary">Create Menu Nav</button>
-      <p id="status" class="status"></p>
+    <section class="popup-section">
+      <h2 class="section-label">Actions</h2>
+      <div class="action-section">
+        <button id="create-nav-menu-btn" type="button" class="btn btn-primary">Create Menu Nav</button>
+        <p id="status" class="status"></p>
+      </div>
+      <div id="record-browser-action" class="action-section" hidden></div>
     </section>
 
-    <div id="feature-categories" class="feature-categories"></div>
-    <p class="hint">Changes take effect after refreshing NetSuite tabs.</p>
+    <section class="popup-section">
+      <h2 class="section-label">Feature Enablement</h2>
+      <div id="feature-categories" class="feature-categories"></div>
+      <p class="hint">Changes take effect after refreshing NetSuite tabs.</p>
+    </section>
 
     <footer class="popup-footer">
       <button id="options-btn" type="button" class="btn btn-link">Full instructions</button>
@@ -80,21 +87,42 @@ optionsButton.addEventListener("click", () => {
   chrome.runtime.openOptionsPage();
 });
 
+// The Actions section holds one-click actions against the current tab.
+// Create Menu Nav is always there; opt-in actions (Record Browser) only
+// appear while their feature flag is on. Unlike every other toggle in the
+// popup, this one takes effect immediately — it only shows/hides a button
+// in this popup, nothing injected into NetSuite tabs — so the toggle's
+// onChange calls this directly too. Mounted lazily on first enable so the
+// popup doesn't render the tree's React root for users who never turn it on.
+const recordBrowserAction = document.querySelector<HTMLDivElement>("#record-browser-action")!;
+let recordBrowserMounted = false;
+
+function setRecordBrowserActionVisible(visible: boolean): void {
+  if (visible && !recordBrowserMounted) {
+    mountRecordBrowserAction(recordBrowserAction);
+    recordBrowserMounted = true;
+  }
+  recordBrowserAction.hidden = !visible;
+}
+
 // Everything in the popup/options pages is framed as a "feature" living
 // inside a category — Navigation (Vertical Hover Nav: toggle only;
 // Customize Nav: dropdown only, since there's no simple on/off, just
 // config) and Appearance (Color Override: both — the toggle is on/off,
 // the dropdown reveals the actual color fields, independent of whether
-// that toggle is on) and Developer Tools (Record Browser: dropdown only —
-// a user-initiated action, nothing to toggle). core/feature-card.ts owns
-// the shared card/category chrome; this only decides what goes in which category and wires each
-// card's specific behavior.
+// that toggle is on) and Developer Tools (Record Browser: toggle only —
+// enabling it adds its Load Record button to the popup's Actions
+// section; the tree itself lives there, not in this card).
+// core/feature-card.ts owns the shared card/category chrome; this only
+// decides what goes in which category and wires each card's specific
+// behavior.
 async function renderFeatureCategories(): Promise<void> {
   const container = document.querySelector<HTMLDivElement>("#feature-categories")!;
   const flagState = await getFeatureFlagState();
   const colorOverrideEnabled = await isCustomAppearanceEnabled();
   const verticalHoverFlag = FEATURE_FLAGS.find((flag) => flag.id === "verticalHoverNav")!;
   const headerBannersFlag = FEATURE_FLAGS.find((flag) => flag.id === "headerBanners")!;
+  const recordBrowserFlag = FEATURE_FLAGS.find((flag) => flag.id === "recordBrowser")!;
 
   container.innerHTML =
     featureCategoryHTML(
@@ -143,12 +171,12 @@ async function renderFeatureCategories(): Promise<void> {
     featureCategoryHTML(
       "Developer Tools",
       featureCardHTML({
-        id: RECORD_BROWSER_SECTION_ID,
-        name: "Record Browser",
-        description:
-          "View the current record as a searchable JSON tree — every body field and sublist line, built from NetSuite's own XML view of the record.",
-        hasToggle: false,
-        hasDropdown: true,
+        id: recordBrowserFlag.id,
+        name: recordBrowserFlag.name,
+        description: recordBrowserFlag.description,
+        hasToggle: true,
+        hasDropdown: false,
+        toggleChecked: flagState[recordBrowserFlag.id],
       }),
     );
 
@@ -168,8 +196,11 @@ async function renderFeatureCategories(): Promise<void> {
     void setFeatureEnabled(headerBannersFlag.id, checked);
   });
 
-  wireFeatureCardExpand(RECORD_BROWSER_SECTION_ID);
-  mountRecordBrowserPopupBody(document.getElementById(`feature-body-${RECORD_BROWSER_SECTION_ID}`)!);
+  wireFeatureCardToggle(recordBrowserFlag.id, (checked) => {
+    void setFeatureEnabled(recordBrowserFlag.id, checked);
+    setRecordBrowserActionVisible(checked);
+  });
+  setRecordBrowserActionVisible(flagState[recordBrowserFlag.id] ?? false);
 }
 
 void renderFeatureCategories();

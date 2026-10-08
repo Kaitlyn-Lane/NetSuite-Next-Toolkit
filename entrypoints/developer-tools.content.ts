@@ -10,8 +10,11 @@ import {
   type GetRecordResponse,
 } from "@/features/developer-tools/record-browser/types/messages";
 
-// Developer-tool actions: user-initiated from the popup, never auto-run,
-// so nothing here is gated by a feature flag (see core/feature-flags.ts).
+// Developer-tool actions: user-initiated from the popup, never auto-run.
+// Record Browser's feature flag gates its button in the popup's Actions
+// section, not this listener. The listener does nothing until the popup
+// sends GET_RECORD, so there's nothing to gate here (and gating it would
+// make the toggle need a tab refresh, which it otherwise doesn't).
 // Separate from nav.content.ts since these aren't nav features, not
 // because the matches/timing differ.
 //

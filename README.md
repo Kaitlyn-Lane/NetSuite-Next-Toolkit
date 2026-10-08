@@ -26,7 +26,8 @@ works correctly, it's just not pretty yet.
 ### Record Browser
 Shows the current record as a searchable JSON tree (body fields plus each
 sublist's lines), built from NetSuite's own `&xml=T` view of the record.
-Triggered from the extension popup (Developer Tools → Record Browser). The
+Opt-in: enable it under Feature Enablement → Developer Tools, and a
+"Load Record" button appears in the popup's Actions section. The
 approach is adapted from
 [netsuite-field-explorer](https://github.com/michoelchaikin/netsuite-field-explorer)
 (MIT; see `THIRD_PARTY_NOTICES.md`). See

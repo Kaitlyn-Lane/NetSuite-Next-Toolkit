@@ -1,8 +1,10 @@
 // Central registry for features that can be toggled on/off from the popup
-// or the options page. A feature only belongs here if it's something that
-// gets auto-injected into NetSuite pages and needs to be lockable behind a
-// setting — user-initiated actions (e.g. the "Create Menu Nav" button) are
-// never gated and don't need an entry.
+// or the options page. Two kinds live here: features that get
+// auto-injected into NetSuite pages and need to be lockable behind a
+// setting (vertical-hover, header banners), and opt-in popup actions whose
+// button only appears in the popup's Actions section once enabled (Record
+// Browser). Core actions everyone needs (e.g. the "Create Menu Nav"
+// button) are never gated and don't need an entry.
 export interface FeatureFlag {
   id: string;
   name: string;
@@ -24,6 +26,15 @@ export const FEATURE_FLAGS: FeatureFlag[] = [
     description:
       "Widens NetSuite's field-group header bars to full width with an ocean-tinted background.",
     defaultEnabled: true,
+  },
+  {
+    id: "recordBrowser",
+    name: "Record Browser",
+    description:
+      "Adds a Load Record button to the popup's Actions section: view the current record as a searchable JSON tree, built from NetSuite's own XML view of it.",
+    // Off by default — a developer tool, so it stays out of the popup's
+    // Actions section until someone opts in.
+    defaultEnabled: false,
   },
 ];
 

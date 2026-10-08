@@ -1,7 +1,8 @@
 # Record Browser: the current record as a searchable JSON tree
 
-Popup-triggered ("Load current record" inside the Record Browser card,
-under Developer Tools). Fetches the current record's XML view — the same
+Opt-in: enable it under Feature Enablement → Developer Tools (popup or
+options page), and a **Load Record** button appears in the popup's
+Actions section. Fetches the current record's XML view — the same
 thing you'd get by appending `&xml=T` to a classic record URL — and shows
 it as a collapsible, filterable tree:
 
@@ -46,11 +47,16 @@ frame only for the same reason `nav.content.ts` is: with a listener in
 every frame, an iframe with no `#classicIframe` could answer "no record"
 before the top frame's real reply got to the popup.
 
-## Why no feature flag
+## Feature flag
 
-Nothing here runs unless the user clicks, so there's nothing to gate (see
-`core/feature-flags.ts`'s own comment). The card is dropdown-only, with no
-toggle.
+`recordBrowser` in `core/feature-flags.ts`, off by default. Unlike the
+other flags it doesn't gate anything injected into NetSuite: it only
+decides whether the popup's Actions section shows the Load Record button
+(and the tree under it). So toggling it takes effect immediately in the
+popup, with no tab refresh. The content script's `GET_RECORD` listener
+stays registered either way, but it does nothing until the popup sends
+that message. The card is toggle-only, and the UI lives in Actions, not
+in a card dropdown.
 
 ## Open questions (unverified — no live NetSuite access when written)
 
@@ -89,11 +95,11 @@ toggle.
 - `filter-record.ts`: the search filter. It keeps leaves whose key or
   value contains the term, plus the containers on the way to them.
 - `RecordBrowser.tsx`: the popup UI (load button, filter box, tree).
-- `mount.tsx`: `mountRecordBrowserPopupBody` (the React tree) and
-  `mountRecordBrowserOptionsNote` (plain HTML). The options page gets a
-  how-to note instead of the browser because it's its own tab, with no
-  "current record" to load. That's the inverse of Customize Nav, which
-  links the popup out to options because the popup is too narrow for it.
+- `mount.tsx`: `mountRecordBrowserAction`, which mounts it into the
+  popup's Actions section. `entrypoints/popup/main.ts` mounts it lazily
+  the first time the flag is on and only shows or hides it after that.
+  Popup only: the options page is its own tab, with no "current record"
+  to load, so there the feature is just its toggle.
 - `styles.css`: `rb-*` styles on top of `core/theme.css`.
 
 `index.ts` re-exports the public surface. The content script imports

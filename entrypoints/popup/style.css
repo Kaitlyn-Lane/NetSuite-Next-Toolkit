@@ -20,6 +20,23 @@ body {
   width: 100%;
 }
 
+/* The popup's two top-level sections: Actions (one-click actions against
+   the current tab) and Feature Enablement (the categorized toggles). */
+.popup-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.popup-section + .popup-section {
+  padding-top: 12px;
+  border-top: 1px solid var(--nst-border);
+}
+
+.popup-section .section-label {
+  margin: 0;
+}
+
 .status {
   min-height: 1.1em;
   margin: 6px 0 0;

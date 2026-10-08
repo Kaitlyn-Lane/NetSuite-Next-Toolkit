@@ -67,7 +67,7 @@ export function RecordBrowser() {
   return (
     <div className="rb-root">
       <button type="button" className="btn btn-primary" onClick={() => void loadRecord()} disabled={loading}>
-        {record ? "Reload record" : "Load current record"}
+        {record ? "Reload Record" : "Load Record"}
       </button>
       {status && <p className="rb-status">{status}</p>}
 
