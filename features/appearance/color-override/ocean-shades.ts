@@ -39,11 +39,13 @@ export function generateOceanShades(baseHex: string): Record<number, string> {
 // NetSuite sets these tokens itself via inline style (element.style, most
 // likely its own JS theming), and an inline style always wins over a
 // stylesheet rule of equal or lower importance regardless of selector
-// specificity.
+// specificity. NetSuite's Redwood --uif-redwood-color-light-brand-* scale
+// uses the same 10–190 steps, so it gets the same generated shades too.
 export function applyOceanShades(baseHex: string): void {
   const shades = generateOceanShades(baseHex);
   const root = document.documentElement.style;
   for (const [shade, hex] of Object.entries(shades)) {
     root.setProperty(`--ns-ui-token-light-ocean-${shade}`, hex, "important");
+    root.setProperty(`--uif-redwood-color-light-brand-${shade}`, hex, "important");
   }
 }
