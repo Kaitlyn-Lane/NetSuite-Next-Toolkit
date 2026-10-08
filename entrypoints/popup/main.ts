@@ -96,7 +96,7 @@ optionsButton.addEventListener("click", () => {
 // popup, this one takes effect immediately — it only shows/hides a button
 // in this popup, nothing injected into NetSuite tabs — so the toggle's
 // onChange calls this directly too. Mounted on first enable; after that
-// it's only shown/hidden. The button opens the tree in its own tab (see
+// it's only shown/hidden. The button opens the tree in its own popup window (see
 // features/developer-tools/record-browser/open-record-browser.ts).
 const recordBrowserAction = document.querySelector<HTMLDivElement>("#record-browser-action")!;
 let recordBrowserMounted = false;

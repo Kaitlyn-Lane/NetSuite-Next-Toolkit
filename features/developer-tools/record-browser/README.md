@@ -2,8 +2,8 @@
 
 Opt-in: enable it under Feature Enablement → Developer Tools (popup or
 options page), and a **Load Record** button appears in the popup's
-Actions section. Clicking it opens the Record Browser in a new tab next to
-the NetSuite one. It fetches the current record's XML view — the same
+Actions section. Clicking it opens the Record Browser in its own popup
+window. It fetches the current record's XML view — the same
 thing you'd get by appending `&xml=T` to a classic record URL — and shows
 it as a collapsible, filterable tree:
 
@@ -31,15 +31,17 @@ URL, already carrying `?id=`, so `fetch-record.ts` reads it, sets
 cross-origin access (only reaching into its document would), so there's
 no SuiteScript, no network sniffing, and no per-record-type URL mapping.
 
-## Why it opens in a tab
+## Why it opens in its own window
 
 Records routinely have hundreds of body fields, which is far more than a
 300px popup can show usefully. So the popup's button only opens
 `record-browser.html?tabId=<NetSuite tab>` (the `entrypoints/record-browser/`
-page) in a new tab. That page asks the NetSuite tab for the record
-itself. The popup can't do the fetch and hand over the result, because
-opening a tab takes focus, which closes the popup and cuts off anything
-still awaiting in it. The page's **Reload Record** asks the same tab
+page) via `chrome.windows.create({ type: "popup" })`. That gives a
+960×800 window with no tab strip or address bar, which sits alongside
+the NetSuite tab instead of replacing it on screen. That page asks the
+NetSuite tab for the record itself. The popup can't do the fetch and
+hand over the result, because opening a window takes focus, which closes
+the popup and cuts off anything still awaiting in it. The page's **Reload Record** asks the same tab
 again, so it picks up whatever record that tab is on by then. If that tab
 has been closed, the page says so.
 
@@ -109,8 +111,8 @@ message. The card is toggle-only, with no dropdown.
   value contains the term, plus the containers on the way to them.
 - `open-record-browser.ts`: the popup side. `mountRecordBrowserAction`
   renders the Load Record button (vanilla, no React) into the popup's
-  Actions section, and `openRecordBrowser()` opens the page with the
-  current tab's id as `?tabId=` (`SOURCE_TAB_PARAM`).
+  Actions section, and `openRecordBrowser()` opens the page in a popup
+  window with the current tab's id as `?tabId=` (`SOURCE_TAB_PARAM`).
   `entrypoints/popup/main.ts` mounts the button the first time the flag
   is on and only shows or hides it after that.
 - `RecordBrowser.tsx`: the page UI. It loads on mount and has the record

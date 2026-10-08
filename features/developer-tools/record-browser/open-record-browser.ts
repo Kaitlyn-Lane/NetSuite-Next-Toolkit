@@ -1,13 +1,19 @@
 // The record-browser page's own URL param: the id of the NetSuite tab to
-// load the record from. The page is a tab of its own, so it can't just
-// ask for "the active tab" the way the popup can.
+// load the record from. The page is in a window of its own, so it can't
+// just ask for "the active tab" the way the popup can.
 export const SOURCE_TAB_PARAM = "tabId";
 
-// Opens the Record Browser page in a new tab next to the current one,
-// pointed at the current tab. The popup only passes the tab id along
-// rather than fetching the record itself: opening a tab takes focus,
-// which closes the popup, so anything still awaiting in it would be cut
-// off. The new page does the actual GET_RECORD round trip instead.
+// Chrome clamps these to the screen, so they're safe on small displays.
+const WINDOW_WIDTH = 960;
+const WINDOW_HEIGHT = 800;
+
+// Opens the Record Browser page in its own popup-type window (no tab
+// strip or address bar) rather than a tab, so it sits alongside the
+// NetSuite tab instead of replacing it on screen. The popup only passes
+// the tab id along rather than fetching the record itself: opening a
+// window takes focus, which closes the popup, so anything still awaiting
+// in it would be cut off. The new page does the actual GET_RECORD round
+// trip instead.
 export async function openRecordBrowser(): Promise<void> {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   if (tab?.id === undefined) {
@@ -16,7 +22,12 @@ export async function openRecordBrowser(): Promise<void> {
 
   const url = new URL(chrome.runtime.getURL("/record-browser.html"));
   url.searchParams.set(SOURCE_TAB_PARAM, String(tab.id));
-  await chrome.tabs.create({ url: url.toString(), index: tab.index + 1, openerTabId: tab.id });
+  await chrome.windows.create({
+    url: url.toString(),
+    type: "popup",
+    width: WINDOW_WIDTH,
+    height: WINDOW_HEIGHT,
+  });
 }
 
 // Popup's Actions-section body for this feature: just the button. Vanilla

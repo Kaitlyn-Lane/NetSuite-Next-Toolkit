@@ -20,7 +20,7 @@ const treeStyles = prefersDark ? darkStyles : defaultStyles;
 const DEFAULT_EXPAND = (level: number) => level < 2;
 
 // The NetSuite tab this page was opened from (see open-record-browser.ts)
-// — this page is its own tab, so "the active tab" would be itself. Loads
+// — this page is in its own window, so "the active tab" would be itself. Loads
 // on mount; Reload re-asks the same tab, which picks up whatever record
 // it's on by then.
 export function RecordBrowser({ sourceTabId }: { sourceTabId: number }) {
