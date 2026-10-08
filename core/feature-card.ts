@@ -47,12 +47,14 @@ export function featureCardHTML(spec: FeatureCardSpec): string {
   `;
 }
 
-// Each category is its own collapsible section (open by default) rather
-// than a plain labeled group — there's no outer "Features" heading
-// wrapping all of them, each one stands as its own section on the page.
+// Each category is its own collapsible section (collapsed by default, so
+// the popup opens to a short list of category names rather than every
+// card at once) rather than a plain labeled group — there's no outer
+// "Features" heading wrapping all of them, each one stands as its own
+// section on the page.
 export function featureCategoryHTML(label: string, cardsHtml: string): string {
   return `
-    <details class="feature-category" open>
+    <details class="feature-category">
       <summary class="feature-category-label">${label}</summary>
       <div class="feature-category-list">${cardsHtml}</div>
     </details>
@@ -77,11 +79,15 @@ export function wireFeatureCardExpand(id: string): void {
 // Expands a card's dropdown programmatically (deep-linking via
 // core/section-params.ts) without faking a click — same end state either
 // way, since this sets the exact same attributes the click handler above
-// does.
+// does. Also opens the card's enclosing category — categories start
+// collapsed, and an expanded card inside a closed one is still invisible.
 export function expandFeatureCard(id: string): HTMLElement | null {
   const button = document.getElementById(`feature-expand-${id}`) as HTMLButtonElement | null;
   const body = document.getElementById(`feature-body-${id}`) as HTMLDivElement | null;
   if (!button || !body) return null;
+
+  const category = body.closest<HTMLDetailsElement>("details.feature-category");
+  if (category) category.open = true;
 
   button.setAttribute("aria-expanded", "true");
   button.classList.add("expanded");
