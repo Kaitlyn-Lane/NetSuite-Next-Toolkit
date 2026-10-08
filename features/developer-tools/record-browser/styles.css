@@ -1,52 +1,74 @@
-/* Styling for what record-browser renders into its feature card's
-   dropdown body (core/feature-card.ts owns the card's own chrome).
-   Shared primitives — --nst-* variables, .btn — come from
-   core/theme.css, already loaded by whichever page mounts this; the tree
+/* Styling for the Record Browser page (entrypoints/record-browser/,
+   mounted by mount.tsx). Shared primitives — --nst-* variables, .btn —
+   come from core/theme.css, loaded by that page's main.ts; the tree
    itself is styled by react-json-view-lite's own stylesheet, imported in
-   RecordBrowser.tsx. */
+   RecordBrowser.tsx. The popup's Load Record button (open-record-browser.ts)
+   only uses core/theme.css's .btn and the popup's own .status. */
 
 .rb-root {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 28px 24px 64px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 14px;
 }
 
-.rb-root .btn-primary {
-  width: 100%;
+.rb-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
 }
 
-.rb-status,
-.rb-note {
+.rb-title {
   margin: 0;
-  font-size: 12px;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.rb-status {
+  margin: 0;
+  font-size: 13px;
   line-height: 1.4;
   color: var(--nst-text-muted);
 }
 
+/* Sticky so the search box stays reachable while scrolling a long tree. */
+.rb-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  background: var(--nst-bg);
+}
+
 .rb-search {
+  flex: 1;
   font: inherit;
-  font-size: 12.5px;
-  padding: 6px 8px;
+  font-size: 14px;
+  padding: 8px 10px;
   border: 1px solid var(--nst-border);
-  border-radius: 6px;
+  border-radius: 8px;
   background: var(--nst-surface);
   color: var(--nst-text);
 }
 
-/* Records routinely have hundreds of body fields — keep the tree in its
-   own scroll box rather than stretching the popup. The library's own
-   container class sets a background; overflow-wrap keeps long values
-   (addresses, URLs) from forcing horizontal scroll in a 300px popup. */
-.rb-tree {
-  max-height: 360px;
-  overflow: auto;
-  font-size: 11.5px;
-  border: 1px solid var(--nst-border);
-  border-radius: 6px;
-  overflow-wrap: anywhere;
+.rb-source {
+  font-size: 13px;
+  white-space: nowrap;
+  color: var(--nst-accent);
 }
 
-.rb-source {
-  font-size: 12px;
-  color: var(--nst-accent);
+/* overflow-wrap keeps long values (addresses, URLs) wrapping rather than
+   forcing the whole page to scroll sideways. */
+.rb-tree {
+  font-size: 13px;
+  border: 1px solid var(--nst-border);
+  border-radius: 8px;
+  overflow-wrap: anywhere;
 }

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { allExpanded, darkStyles, defaultStyles, JsonView } from "react-json-view-lite";
 import "react-json-view-lite/dist/index.css";
 
@@ -19,7 +19,11 @@ const treeStyles = prefersDark ? darkStyles : defaultStyles;
 // anything else nested deeper) collapsed until clicked.
 const DEFAULT_EXPAND = (level: number) => level < 2;
 
-export function RecordBrowser() {
+// The NetSuite tab this page was opened from (see open-record-browser.ts)
+// — this page is its own tab, so "the active tab" would be itself. Loads
+// on mount; Reload re-asks the same tab, which picks up whatever record
+// it's on by then.
+export function RecordBrowser({ sourceTabId }: { sourceTabId: number }) {
   const [record, setRecord] = useState<RecordData | null>(null);
   const [sourceUrl, setSourceUrl] = useState("");
   const [status, setStatus] = useState("");
@@ -35,19 +39,16 @@ export function RecordBrowser() {
     setLoading(true);
     setStatus("Loading…");
     try {
-      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-      if (!tab?.id) {
-        setStatus("Couldn't find the active tab.");
-        return;
-      }
-
       let response: GetRecordResponse;
       try {
-        response = await chrome.tabs.sendMessage<GetRecordRequest, GetRecordResponse>(tab.id, {
+        response = await chrome.tabs.sendMessage<GetRecordRequest, GetRecordResponse>(sourceTabId, {
           type: GET_RECORD_MESSAGE,
         });
       } catch {
-        setStatus("Couldn't reach the page — make sure you're on a NetSuite tab and try reloading it.");
+        setRecord(null);
+        setStatus(
+          "Couldn't reach the NetSuite tab this was opened from — it may have been closed. Reload that tab and click Load Record again.",
+        );
         return;
       }
 
@@ -64,23 +65,38 @@ export function RecordBrowser() {
     }
   }
 
+  useEffect(() => {
+    void loadRecord();
+    // Once per page load — sourceTabId comes from the URL and never changes.
+  }, []);
+
   return (
     <div className="rb-root">
-      <button type="button" className="btn btn-primary" onClick={() => void loadRecord()} disabled={loading}>
-        {record ? "Reload Record" : "Load Record"}
-      </button>
+      <header className="rb-header">
+        <h1 className="rb-title">
+          {record ? `${record.recordType ?? "record"} #${record.id ?? "?"}` : "Record Browser"}
+        </h1>
+        <button type="button" className="btn btn-primary" onClick={() => void loadRecord()} disabled={loading}>
+          Reload Record
+        </button>
+      </header>
       {status && <p className="rb-status">{status}</p>}
 
       {record && (
         <>
-          <input
-            type="search"
-            className="rb-search"
-            placeholder="Filter fields and values…"
-            value={searchTerm}
-            onChange={(event) => setSearchTerm(event.target.value)}
-            autoFocus
-          />
+          <div className="rb-toolbar">
+            <input
+              type="search"
+              className="rb-search"
+              placeholder="Search fields and values…"
+              value={searchTerm}
+              onChange={(event) => setSearchTerm(event.target.value)}
+              autoFocus
+            />
+            <a className="rb-source" href={sourceUrl} target="_blank" rel="noreferrer">
+              View raw XML
+            </a>
+          </div>
           <div className="rb-tree">
             {visible && Object.keys(visible).length ? (
               // Keyed on the search term: JsonView only reads
@@ -96,9 +112,6 @@ export function RecordBrowser() {
               <p className="rb-status">No fields match “{searchTerm}”.</p>
             )}
           </div>
-          <a className="rb-source" href={sourceUrl} target="_blank" rel="noreferrer">
-            View raw XML
-          </a>
         </>
       )}
     </div>

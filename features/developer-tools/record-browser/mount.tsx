@@ -3,10 +3,10 @@ import { createRoot } from "react-dom/client";
 import { RecordBrowser } from "./RecordBrowser";
 import "./styles.css";
 
-// Mounts the Record Browser (load button, filter box, tree) into the
-// popup's Actions section. Popup only — "the current record" means the
-// active NetSuite tab, which the options page (a tab of its own) doesn't
-// have; there the feature is just its enable toggle.
-export function mountRecordBrowserAction(container: HTMLElement): void {
-  createRoot(container).render(<RecordBrowser />);
+// Mounts the Record Browser into its own extension page
+// (entrypoints/record-browser/), opened in a new tab by the popup's Load
+// Record button. A tab instead of the popup itself: records routinely
+// have hundreds of fields, far more than a 300px popup can show usefully.
+export function mountRecordBrowserPage(container: HTMLElement, sourceTabId: number): void {
+  createRoot(container).render(<RecordBrowser sourceTabId={sourceTabId} />);
 }

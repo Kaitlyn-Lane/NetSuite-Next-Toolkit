@@ -9,7 +9,10 @@ import { FEATURE_FLAGS, getFeatureFlagState, setFeatureEnabled } from "@/core/fe
 import { featureCardHTML, featureCategoryHTML, wireFeatureCardExpand, wireFeatureCardToggle } from "@/core/feature-card";
 import { CUSTOMIZE_NAV_SECTION_ID, mountCustomizeNavPopupBody } from "@/features/nav/customize-nav";
 import { isCustomAppearanceEnabled, mountThemeColorPicker, setCustomAppearanceEnabled } from "@/features/appearance/color-override";
-import { mountRecordBrowserAction } from "@/features/developer-tools/record-browser";
+// Directly, not via the feature's index.ts barrel — the barrel also
+// re-exports the record-browser page's React tree (react-json-view-lite +
+// its stylesheet), which the popup never renders.
+import { mountRecordBrowserAction } from "@/features/developer-tools/record-browser/open-record-browser";
 
 const COLOR_OVERRIDE_ID = "colorOverride";
 
@@ -92,8 +95,9 @@ optionsButton.addEventListener("click", () => {
 // appear while their feature flag is on. Unlike every other toggle in the
 // popup, this one takes effect immediately — it only shows/hides a button
 // in this popup, nothing injected into NetSuite tabs — so the toggle's
-// onChange calls this directly too. Mounted lazily on first enable so the
-// popup doesn't render the tree's React root for users who never turn it on.
+// onChange calls this directly too. Mounted on first enable; after that
+// it's only shown/hidden. The button opens the tree in its own tab (see
+// features/developer-tools/record-browser/open-record-browser.ts).
 const recordBrowserAction = document.querySelector<HTMLDivElement>("#record-browser-action")!;
 let recordBrowserMounted = false;
 

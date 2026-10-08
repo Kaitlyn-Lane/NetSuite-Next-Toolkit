@@ -1,4 +1,4 @@
-// Shared contract between entrypoints/popup and
+// Shared contract between entrypoints/record-browser and
 // entrypoints/developer-tools.content.ts — imported by both sides so a
 // mismatch is a compile error, not a runtime surprise.
 

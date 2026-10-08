@@ -2,7 +2,8 @@
 
 Opt-in: enable it under Feature Enablement → Developer Tools (popup or
 options page), and a **Load Record** button appears in the popup's
-Actions section. Fetches the current record's XML view — the same
+Actions section. Clicking it opens the Record Browser in a new tab next to
+the NetSuite one. It fetches the current record's XML view — the same
 thing you'd get by appending `&xml=T` to a classic record URL — and shows
 it as a collapsible, filterable tree:
 
@@ -30,33 +31,45 @@ URL, already carrying `?id=`, so `fetch-record.ts` reads it, sets
 cross-origin access (only reaching into its document would), so there's
 no SuiteScript, no network sniffing, and no per-record-type URL mapping.
 
+## Why it opens in a tab
+
+Records routinely have hundreds of body fields, which is far more than a
+300px popup can show usefully. So the popup's button only opens
+`record-browser.html?tabId=<NetSuite tab>` (the `entrypoints/record-browser/`
+page) in a new tab. That page asks the NetSuite tab for the record
+itself. The popup can't do the fetch and hand over the result, because
+opening a tab takes focus, which closes the popup and cuts off anything
+still awaiting in it. The page's **Reload Record** asks the same tab
+again, so it picks up whatever record that tab is on by then. If that tab
+has been closed, the page says so.
+
 ## Why the fetch runs in the content script
 
-The popup only knows the tab's URL, not what's inside the page, so
+Neither the popup nor the Record Browser page can see inside the NetSuite
+tab, not what's inside the page, so
 something in the page has to read `#classicIframe` anyway. Doing the
 fetch there too means it's a request from NetSuite's own origin, so the
 session cookies go along with it under the default same-origin
 credentials, without leaning on the extension's `host_permissions`. The
-content script parses the XML (`DOMParser`) and sends the popup the
-finished `RecordData` object over the `GET_RECORD` message
+content script parses the XML (`DOMParser`) and sends the Record Browser
+page the finished `RecordData` object over the `GET_RECORD` message
 (`types/messages.ts`, the same request/response pattern as build-menu).
 
 That lives in its own entrypoint, `entrypoints/developer-tools.content.ts`,
 rather than `nav.content.ts`, since this isn't a nav feature. It's top
 frame only for the same reason `nav.content.ts` is: with a listener in
 every frame, an iframe with no `#classicIframe` could answer "no record"
-before the top frame's real reply got to the popup.
+before the top frame's real reply arrived.
 
 ## Feature flag
 
 `recordBrowser` in `core/feature-flags.ts`, off by default. Unlike the
 other flags it doesn't gate anything injected into NetSuite: it only
-decides whether the popup's Actions section shows the Load Record button
-(and the tree under it). So toggling it takes effect immediately in the
-popup, with no tab refresh. The content script's `GET_RECORD` listener
-stays registered either way, but it does nothing until the popup sends
-that message. The card is toggle-only, and the UI lives in Actions, not
-in a card dropdown.
+decides whether the popup's Actions section shows the Load Record button.
+So toggling it takes effect immediately in the popup, with no tab
+refresh. The content script's `GET_RECORD` listener stays registered
+either way, but it does nothing until the Record Browser page sends that
+message. The card is toggle-only, with no dropdown.
 
 ## Open questions (unverified — no live NetSuite access when written)
 
@@ -94,17 +107,23 @@ in a card dropdown.
   every `lineFields` entry has the same shape.
 - `filter-record.ts`: the search filter. It keeps leaves whose key or
   value contains the term, plus the containers on the way to them.
-- `RecordBrowser.tsx`: the popup UI (load button, filter box, tree).
-- `mount.tsx`: `mountRecordBrowserAction`, which mounts it into the
-  popup's Actions section. `entrypoints/popup/main.ts` mounts it lazily
-  the first time the flag is on and only shows or hides it after that.
-  Popup only: the options page is its own tab, with no "current record"
-  to load, so there the feature is just its toggle.
-- `styles.css`: `rb-*` styles on top of `core/theme.css`.
+- `open-record-browser.ts`: the popup side. `mountRecordBrowserAction`
+  renders the Load Record button (vanilla, no React) into the popup's
+  Actions section, and `openRecordBrowser()` opens the page with the
+  current tab's id as `?tabId=` (`SOURCE_TAB_PARAM`).
+  `entrypoints/popup/main.ts` mounts the button the first time the flag
+  is on and only shows or hides it after that.
+- `RecordBrowser.tsx`: the page UI. It loads on mount and has the record
+  type and id as a heading, a Reload button, a search box that stays
+  visible while scrolling, a raw-XML link, and the tree.
+- `mount.tsx`: `mountRecordBrowserPage(container, sourceTabId)`, called
+  by `entrypoints/record-browser/main.ts` after it reads `?tabId=`.
+- `styles.css`: `rb-*` styles for the page, on top of `core/theme.css`.
 
 `index.ts` re-exports the public surface. The content script imports
 `fetch-record.ts` and `types/messages.ts` directly, not the barrel, so it
-doesn't pull in React or the tree library.
+doesn't pull in React or the tree library. The popup imports
+`open-record-browser.ts` directly for the same reason.
 
 ## Tree library: react-json-view-lite
 
